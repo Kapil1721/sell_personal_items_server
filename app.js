@@ -27,11 +27,11 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cookieParser(cookie_secret));
 
-const allowedOrigins = [
-  "https://sellpersonalitems.thepreview.pro",
-  // 'https://anotherdomain.com',
-  "http://localhost:5173",
-];
+// const allowedOrigins = [
+//   "https://sellpersonalitems.thepreview.pro",
+//   // 'https://anotherdomain.com',
+//   "http://localhost:5173",
+// ];
 
 app.use(
   cors({
@@ -41,7 +41,7 @@ app.use(
       "http://localhost",
     ],
     credentials: true,
-    exposedHeaders: ["Set-Cookie"],
+    // exposedHeaders: ["Set-Cookie"],
   })
 );
 // app.use(function (request, response, next) {
