@@ -4,7 +4,7 @@ import {
   userLogin,
   userLogout,
   userSignUp,
-} from "../controllers/Auth.controllers.js";
+} from "../controllers/Auth.Controllers.js";
 import AppError from "../utils/appError.js";
 import {
   addMembership,

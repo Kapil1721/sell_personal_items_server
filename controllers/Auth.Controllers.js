@@ -2,12 +2,9 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import sendMail from "../services/Email.js";
 import bcrypt from "bcryptjs";
-import fs from "fs";
 import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
-import { subscribe } from "diagnostics_channel";
 import AppError from "../utils/appError.js";
-import path from "path";
 
 const prisma = new PrismaClient();
 
