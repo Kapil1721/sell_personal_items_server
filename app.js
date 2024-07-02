@@ -25,12 +25,22 @@ app.use(express.json());
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
+
+const allowedOrigins = [
+  "https://sellpersonalitems.thepreview.pro",
+  // 'https://anotherdomain.com',
+  "http://localhost:5173",
+];
+
 app.use(
   cors({
-    origin: [
-      "https://sellpersonalitems.thepreview.pro",
-      "http://localhost:5173/memberships",
-    ],
+    origin: function (origin, callback) {
+      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
     exposedHeaders: ["Set-Cookie"],
