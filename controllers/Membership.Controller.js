@@ -15,6 +15,6 @@ export const getPlans = async (req, res, next) => {
     });
     res.status(200).json({ plans });
   } catch (error) {
-    return next(new AppError("Something went wrong!", 404));
+    return next(error);
   }
 };

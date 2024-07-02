@@ -38,7 +38,7 @@ app.use(
     origin: [
       "https://thepreview.pro",
       "https://sellpersonalitems.thepreview.pro",
-      "http://localhost",
+      "http://localhost:5173",
     ],
     credentials: true,
     // exposedHeaders: ["Set-Cookie"],
