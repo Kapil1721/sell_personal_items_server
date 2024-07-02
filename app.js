@@ -25,6 +25,7 @@ app.use(express.json());
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
+app.use(cookieParser(cookie_secret));
 
 const allowedOrigins = [
   "https://sellpersonalitems.thepreview.pro",
@@ -34,19 +35,24 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: [
+      "https://thepreview.pro",
+      "https://sellpersonalitems.thepreview.pro",
+      "http://localhost",
+    ],
     credentials: true,
     exposedHeaders: ["Set-Cookie"],
   })
 );
-app.set("trust proxy", 1);
+// app.use(function (request, response, next) {
+//   response.header("Access-Control-Allow-Origin", "*");
+//   response.header(
+//     "Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept"
+//   );
+//   next();
+// });
+// app.set("trust proxy", 1);
 // app.use(session({
 //   secret: process.env.sessionSecret, // your secret key to check session
 //   resave: false,
@@ -57,8 +63,6 @@ app.set("trust proxy", 1);
 //           },
 //   store: store
 // }));
-
-app.use(cookieParser(cookie_secret));
 
 // multer configuration
 
