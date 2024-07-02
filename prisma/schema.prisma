@@ -1,11 +1,10 @@
-generator client {
-    provider      = "prisma-client-js"
-    binaryTargets = ["native", "rhel-openssl-1.0.x"]
-}
-
 datasource db {
     provider = "mysql"
     url      = env("DB_URI")
+}
+
+generator client {
+    provider = "prisma-client-js"
 }
 
 model Users {
@@ -109,7 +108,7 @@ model ListedItem {
     desription String?
     category   String             @db.VarChar(100)
     expires    DateTime?
-    likes      Likes[]            
+    likes      Likes[]
     views      Views[]
     images     Images[]
     createdAt  DateTime           @default(now())
