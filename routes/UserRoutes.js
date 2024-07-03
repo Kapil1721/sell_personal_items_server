@@ -16,6 +16,8 @@ import {
   postProduct,
   updateModerationProductStatus,
   uploads,
+  getModerationProductsforAdminByID,
+  updateProduct,
 } from "../controllers/User.Controllers.js";
 import { getPlans } from "../controllers/Membership.Controller.js";
 import { createDonation } from "../controllers/Donation.Controller.js";
@@ -45,8 +47,8 @@ router.route("/donation/create").post(createDonation);
 
 //user routes
 
-router.route("/addproduct").post(authenticateUser, postProduct);
-router.route("/uploads").post(authenticateUser, upload.single("file"), uploads);
+router.route("/addproduct").post(authenticateUser, postProduct).put(authenticateUser,updateProduct)
+router.route("/uploads").post(upload.single("file"), uploads);
 router.route("/uploads/:file").delete(authenticateUser, deleteUploads);
 
 // for products
@@ -54,8 +56,11 @@ router
   .route("/moderation")
   .get(authenticateUser, getModerationProductsforAdmin)
   .put(authenticateUser, updateModerationProductStatus);
+router
+  .route("/moderation/:id")
+  .get(authenticateUser, getModerationProductsforAdminByID);
 
-router.route('/moderation/:id').getModera
+router.route("/moderation/:id").getModera;
 router.route("/my-products").get(authenticateUser, getMyProducts);
 router.route("/my-products/:id").delete(authenticateUser, deleteMyProduct);
 // .put(authenticateUser, updateModerationProductStatus);

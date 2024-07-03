@@ -56,7 +56,8 @@ export const deleteUploads = async (req, res, next) => {
 
 export const postProduct = CatchAsync(async (req, res, next) => {
   // try {
-  const { name, description, category, images, _attachments } = req.body;
+  const { name, description, category, images, _attachments, active } =
+    req.body;
   const slug = Date.now() + name.replaceAll(" ", "-");
   const product = await prisma.listedItem.create({
     data: {
@@ -65,6 +66,7 @@ export const postProduct = CatchAsync(async (req, res, next) => {
       category,
       slug,
       userId: req.user.id,
+      updatedAt: new Date.now(),
     },
   });
 
@@ -81,6 +83,63 @@ export const postProduct = CatchAsync(async (req, res, next) => {
     res
       .status(200)
       .json({ status: true, message: "Product is listed successfully." });
+  }
+  // } catch (error) {}
+});
+
+export const updateProduct = CatchAsync(async (req, res, next) => {
+  // try {
+  const { name, description, category, images, _attachments, post_id } =
+    req.body;
+
+  console.log(post_id, "post_id");
+  const existingProduct = await prisma.listedItem.findUnique({
+    where: {
+      post_id: post_id,
+    },
+  });
+  if (!existingProduct) {
+    return res
+      .status(404)
+      .json({ status: false, message: "Product not found" });
+  }
+
+  const slug = Date.now() + name.replaceAll(" ", "-");
+  const product = await prisma.listedItem.update({
+    where: {
+      post_id: post_id,
+    },
+    data: {
+      name,
+      desription: description,
+      category,
+      slug,
+      userId: req.user.id,
+    },
+  });
+
+  if (product) {
+    const newImages = [...images, ..._attachments].map((itm) => ({
+      imagesType: itm.type,
+      image: itm.url,
+      listedItem_id: product.post_id,
+    }));
+    // console.log(product, newImages);
+    // const oldImages = await prisma.images.findMany({
+    //   where: {
+    //     listedItem_id: post_id,
+    //   },
+    // });
+    // const _newImages = newImages.filter(
+    //   (item) => oldImages.find((itm) => itm.image === item.image)
+    // );
+    // const productImages = await prisma.images.create({
+    //   data: [...newImages],
+    // });
+    res.status(200).json({
+      status: true,
+      message: "Product has been updated successfully.",
+    });
   }
   // } catch (error) {}
 });
@@ -102,6 +161,35 @@ export const getModerationProductsforAdmin = CatchAsync(
     //     id: products.userId,
     // })
     res.status(200).json({ status: true, products });
+  }
+);
+export const getModerationProductsforAdminByID = CatchAsync(
+  async (req, res, next) => {
+    const { id } = req.params;
+    const products = await prisma.listedItem.findFirst({
+      where: {
+        post_id: parseInt(id),
+      },
+      include: {
+        images: true,
+        user: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+    // const user = await prisma.users.findFirst({
+    //   where: {
+    //     id: products.userId,
+    // })
+    res.status(200).json({
+      status: true,
+      products: {
+        ...products,
+        images: products.images.map((item) => ({ ...item, url: item.image })),
+      },
+    });
   }
 );
 
