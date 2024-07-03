@@ -1,6 +1,7 @@
 import express from "express";
 import {
   authenticateUser,
+  getValidUser,
   userLogin,
   userLogout,
   userSignUp,
@@ -11,6 +12,7 @@ import {
   deleteUploads,
   getModerationProductsforAdmin,
   getMyProducts,
+  deleteMyProduct,
   postProduct,
   updateModerationProductStatus,
   uploads,
@@ -22,6 +24,7 @@ import upload from "../utils/upload.js";
 const router = express.Router();
 
 router.route("/login").post(userLogin);
+router.route("/getValidUser").get(getValidUser);
 router.route("/authenticate").get(authenticateUser, (req, res, next) => {
   try {
     res.status(200).json({ message: "Access granted to protected route" });
@@ -51,7 +54,10 @@ router
   .route("/moderation")
   .get(authenticateUser, getModerationProductsforAdmin)
   .put(authenticateUser, updateModerationProductStatus);
+
+router.route('/moderation/:id').getModera
 router.route("/my-products").get(authenticateUser, getMyProducts);
+router.route("/my-products/:id").delete(authenticateUser, deleteMyProduct);
 // .put(authenticateUser, updateModerationProductStatus);
 
 export default router;

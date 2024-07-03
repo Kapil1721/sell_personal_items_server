@@ -1,6 +1,6 @@
 import path from "path";
 import AppError from "../utils/appError.js";
-import fs from "fs";
+import fs, { stat } from "fs";
 import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
 
@@ -105,23 +105,104 @@ export const getModerationProductsforAdmin = CatchAsync(
   }
 );
 
+export const deleteModerateProducts = CatchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const product = await prisma.listedItem.delete({
+    where: {
+      post_id: parseInt(id),
+    },
+    include: {
+      images: true,
+      comments: true,
+      views: true,
+      likes: true,
+    },
+  });
+  if (!product) {
+    return res.status(404).json({
+      status: false,
+      message: "Product not found",
+    });
+  }
+  products.images.forEach((image) => {
+    const file = image.image;
+    const imagePath = path.join(__dirname, "uploads", file);
+    if (fs.existsSync(imagePath)) {
+      // Delete the file
+      fs.unlinkSync(imagePath);
+    }
+  });
+
+  res.status(200).json({
+    status: true,
+    message: "Product deleted successfully",
+  });
+});
+
 export const updateModerationProductStatus = CatchAsync(
   async (req, res, next) => {
     const { product_id, status } = req.body;
-    const product = await prisma.listedItem.update({
-      where: {
-        post_id: product_id,
-      },
-      data: {
-        status: status,
-      },
-    });
-    res.status(200).json({
-      status: true,
-      message: `Product is ${
-        status === "Draft" ? "moved to draft" : "Approved"
-      } successfully.`,
-    });
+
+    if (status === "Approve") {
+      const product = await prisma.listedItem.update({
+        where: {
+          post_id: product_id,
+        },
+        data: {
+          status: "Active",
+          isApproved: true,
+        },
+      });
+      res.status(200).json({
+        status: true,
+        message: `Product is approved successfully.`,
+      });
+    }
+
+    if (status === "Decline") {
+      const product = await prisma.listedItem.update({
+        where: {
+          post_id: product_id,
+        },
+        data: {
+          status: status,
+        },
+      });
+      res.status(200).json({
+        status: true,
+        message: `Product is declined successfully.`,
+      });
+    }
+    if (status === "Draft") {
+      const product = await prisma.listedItem.update({
+        where: {
+          post_id: product_id,
+        },
+        data: {
+          status: "Draft",
+        },
+      });
+      res.status(200).json({
+        status: true,
+        message: `Product is ${
+          status === "Draft" ? "moved to draft" : "Approved"
+        } successfully.`,
+      });
+    }
+    if (status === "Publish") {
+      const product = await prisma.listedItem.update({
+        where: {
+          post_id: product_id,
+        },
+        data: {
+          status: "Active",
+        },
+      });
+      res.status(200).json({
+        status: true,
+        message: `Product is published successfully.`,
+      });
+    }
   }
 );
 
@@ -142,5 +223,42 @@ export const getMyProducts = CatchAsync(async (req, res, next) => {
   res.status(200).json({
     status: true,
     products,
+  });
+});
+
+export const deleteMyProduct = CatchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  console.log(id);
+  const products = await prisma.listedItem.delete({
+    where: {
+      post_id: parseInt(id),
+    },
+    include: {
+      images: true,
+      comments: true,
+      views: true,
+      likes: true,
+    },
+  });
+  if (!products) {
+    return res.status(404).json({
+      status: false,
+      message: "Product not found",
+    });
+  }
+
+  products.images.forEach((image) => {
+    const file = image.image;
+    const imagePath = path.join(__dirname, "uploads", file);
+    if (fs.existsSync(imagePath)) {
+      // Delete the file
+      fs.unlinkSync(imagePath);
+    }
+  });
+
+  res.status(200).json({
+    status: true,
+    message: "Product deleted successfully",
   });
 });
