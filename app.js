@@ -9,6 +9,7 @@ import globalErrorHandlers from "./controllers/Error.Controllers.js";
 import userRoutes from "./routes/UserRoutes.js";
 import AppError from "./utils/appError.js";
 import multer from "multer";
+import { sql } from '@vercel/postgres';
 
 const app = express();
 
@@ -95,10 +96,15 @@ app.all("*", (req, res, next) => {
 // global error handling
 app.use(globalErrorHandlers);
 
+
+ 
+
+
 // Start the server
 const server = app.listen(port, () => {
   console.log(`App running on port ${port}...\nurl: http://localhost:${port}`);
 });
+
 
 // Handle unhandled rejections
 process.on("unhandledRejection", (err) => {

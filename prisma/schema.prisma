@@ -1,6 +1,8 @@
+
 datasource db {
-    provider = "mysql"
-    url      = env("DB_URI")
+  provider = "postgresql"
+  url = env("sellpersonal_PRISMA_URL") // uses connection pooling
+  directUrl = env("sellpersonal_URL_NON_POOLING") // uses a direct connection
 }
 
 generator client {
