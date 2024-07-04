@@ -20,7 +20,7 @@ export const createSendToken = (user, statusCode, res) => {
   user.password = undefined;
   res.cookie("token", token, {
     httpOnly: false,
-    sameSite: "strict",
+    sameSite: "none",
     maxAge: 24 * 3600000, // 1 day in milliseconds
     secure: process.env.NODE_ENV === "production", // Only set secure cookie in production
   });
