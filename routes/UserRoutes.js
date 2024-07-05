@@ -60,7 +60,8 @@ router
   .put(authenticateUser, updateModerationProductStatus);
 router
   .route("/moderation/:id")
-  .get(authenticateUser, getModerationProductsforAdminByID);
+  .get(authenticateUser, getModerationProductsforAdminByID)
+  .delete(authenticateUser, deleteMyProduct)
 
 
 router.route("/my-products").get(authenticateUser, getMyProducts);

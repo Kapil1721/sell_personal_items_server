@@ -3,6 +3,7 @@ import AppError from "../utils/appError.js";
 import fs, { stat } from "fs";
 import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
+import { count } from "console";
 
 const prisma = new PrismaClient();
 
@@ -328,12 +329,18 @@ export const getMyProduct = CatchAsync(async (req, res, next) => {
       user: {
         select: {
           name: true,
-          username:true,
-          userType:true,
-          countryCode:true,
-          contactNumber:true
+          username: true,
+          userType: true,
+          countryCode: true,
+          contactNumber: true,
         },
       },
+    },
+  });
+  const views = await prisma.views.create({
+    data: {
+      postId: parseInt(req.params.id.split("-")[0]),
+      userId: id,
     },
   });
   res.status(200).json({
