@@ -66,7 +66,6 @@ export const postProduct = CatchAsync(async (req, res, next) => {
       category,
       slug,
       userId: req.user.id,
-      updatedAt: new Date.now(),
     },
   });
 
@@ -115,6 +114,7 @@ export const updateProduct = CatchAsync(async (req, res, next) => {
       category,
       slug,
       userId: req.user.id,
+      updatedAt: new Date(),
     },
   });
 
@@ -311,6 +311,34 @@ export const getMyProducts = CatchAsync(async (req, res, next) => {
   res.status(200).json({
     status: true,
     products,
+  });
+});
+export const getMyProduct = CatchAsync(async (req, res, next) => {
+  const { id } = req.user;
+  const product = await prisma.listedItem.findUnique({
+    where: {
+      post_id: parseInt(req.params.id.split("-")[0]),
+      userId: id,
+    },
+    include: {
+      images: true,
+      comments: true,
+      views: true,
+      likes: true,
+      user: {
+        select: {
+          name: true,
+          username:true,
+          userType:true,
+          countryCode:true,
+          contactNumber:true
+        },
+      },
+    },
+  });
+  res.status(200).json({
+    status: true,
+    product,
   });
 });
 

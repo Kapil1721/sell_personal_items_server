@@ -97,8 +97,29 @@ model ListedItem {
   comments   Comment[]
   images     Images[]
   likes      Likes[]
+  reviews    Reviews[]
   user       Users              @relation(fields: [userId], references: [id])
   views      Views[]
+}
+
+model Reviews {
+  id                Int             @id @default(autoincrement())
+  rating            Int
+  comment           String
+  reviewImages      ReviewsImages[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  ListedItem        ListedItem?     @relation(fields: [listedItemPost_id], references: [post_id])
+  listedItemPost_id Int?
+}
+
+model ReviewsImages {
+  id        Int      @id @default(autoincrement())
+  image     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Reviews   Reviews? @relation(fields: [reviewsId], references: [id])
+  reviewsId Int?
 }
 
 model Views {
