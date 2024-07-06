@@ -23,7 +23,7 @@ export const addMembership = async (req, res, next) => {
 export const uploads = async (req, res, next) => {
   try {
     const { file } = req;
-    // console.log(file);
+    console.log(file);
     res.status(200).json({
       status: "success",
       file,
@@ -147,7 +147,13 @@ export const updateProduct = CatchAsync(async (req, res, next) => {
 
 export const getModerationProductsforAdmin = CatchAsync(
   async (req, res, next) => {
+    const { page, limit, sort, searchQuery } = req.query;
+    const order = sort ? (sort === "Oldest" ? "asc" : "desc") : "desc";
+
     const products = await prisma.listedItem.findMany({
+      where: {
+        name: { contains: searchQuery, mode: "insensitive" },
+      },
       include: {
         images: true,
         user: {
@@ -156,7 +162,11 @@ export const getModerationProductsforAdmin = CatchAsync(
           },
         },
       },
+      orderBy: {
+        createdAt: order,
+      },
     });
+
     // const user = await prisma.users.findFirst({
     //   where: {
     //     id: products.userId,
@@ -173,13 +183,21 @@ export const getModerationProductsforAdminByID = CatchAsync(
       },
       include: {
         images: true,
+        comments: true,
+        views: true,
+        likes: true,
         user: {
           select: {
             name: true,
+            username: true,
+            userType: true,
+            countryCode: true,
+            contactNumber: true,
           },
         },
       },
     });
+
     // const user = await prisma.users.findFirst({
     //   where: {
     //     id: products.userId,
@@ -297,15 +315,22 @@ export const updateModerationProductStatus = CatchAsync(
 
 export const getMyProducts = CatchAsync(async (req, res, next) => {
   const { id } = req.user;
+  const { page, limit, sort, searchQuery } = req.query;
+  const order = sort ? (sort === "Oldest" ? "asc" : "desc") : "desc";
+
   const products = await prisma.listedItem.findMany({
     where: {
       userId: id,
+      name: { contains: searchQuery, mode: "insensitive" },
     },
     include: {
       images: true,
       comments: true,
       views: true,
       likes: true,
+    },
+    orderBy: {
+      createdAt: order,
     },
   });
 
@@ -314,6 +339,7 @@ export const getMyProducts = CatchAsync(async (req, res, next) => {
     products,
   });
 });
+
 export const getMyProduct = CatchAsync(async (req, res, next) => {
   const { id } = req.user;
   const product = await prisma.listedItem.findUnique({
