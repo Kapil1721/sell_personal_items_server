@@ -87,7 +87,7 @@ app.get("/api/v1", (req, res) => {
   res.status(200).json({ message: "I'am fine" });
 });
 
-app.use("/api/v1", userRoutes);
+app.use("", userRoutes);
 
 // Handle undefined routes
 app.all("*", (req, res, next) => {
