@@ -2,7 +2,5 @@
   "version": 2,
   "name": "backend-server",
   "builds": [{ "src": "app.js", "use": "@vercel/node" }],
-  "routes": [{ "src": "/(.*)", "dest": "app.js" }],
-
-    "build": "chmod -R 777 tmp"
+  "routes": [{ "src": "/(.*)", "dest": "app.js" }]
   }
