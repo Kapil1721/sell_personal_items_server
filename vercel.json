@@ -3,7 +3,6 @@
   "name": "backend-server",
   "builds": [{ "src": "app.js", "use": "@vercel/node" }],
   "routes": [{ "src": "/(.*)", "dest": "app.js" }],
-  "hooks": {
+
     "build": "chmod -R 777 tmp"
   }
-}
