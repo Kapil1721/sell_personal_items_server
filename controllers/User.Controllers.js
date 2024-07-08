@@ -76,10 +76,11 @@ export const postProduct = CatchAsync(async (req, res, next) => {
       image: itm.url,
       listedItem_id: product.post_id,
     }));
-    // console.log(product, newImages);
+
     const productImages = await prisma.images.createMany({
       data: [...newImages],
     });
+    console.log(product, productImages);
     res
       .status(200)
       .json({ status: true, message: "Product is listed successfully." });
@@ -125,18 +126,14 @@ export const updateProduct = CatchAsync(async (req, res, next) => {
       image: itm.url,
       listedItem_id: product.post_id,
     }));
-    // console.log(product, newImages);
-    // const oldImages = await prisma.images.findMany({
-    //   where: {
-    //     listedItem_id: post_id,
-    //   },
-    // });
-    // const _newImages = newImages.filter(
-    //   (item) => oldImages.find((itm) => itm.image === item.image)
-    // );
-    // const productImages = await prisma.images.create({
-    //   data: [...newImages],
-    // });
+    const oldImages = await prisma.images.deleteMany({
+      where: {
+        listedItem_id: product.post_id,
+      },
+    });
+    const newImagesData = await prisma.images.createMany({
+      data: newImages,
+    });
     res.status(200).json({
       status: true,
       message: "Product has been updated successfully.",
