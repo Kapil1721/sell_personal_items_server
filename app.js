@@ -81,9 +81,9 @@ const upload = multer({ storage: storage });
 
 let tempraryImageDirectory
 if (process.env.DEV && process.env.DEV === 'Yes') {
-  tempraryImageDirectory = path.join(__dirname, `tmp`);
+  tempraryImageDirectory = path.join(__dirname, `/tmp`);
 } else {
-  tempraryImageDirectory = 'tmp';
+  tempraryImageDirectory = '/tmp';
 }
 app.use("/uploads", express.static(path.join(__dirname, tempraryImageDirectory)));
 
