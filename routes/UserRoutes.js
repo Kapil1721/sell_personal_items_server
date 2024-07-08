@@ -23,14 +23,21 @@ import {
 import { getPlans } from "../controllers/Membership.Controller.js";
 import { createDonation } from "../controllers/Donation.Controller.js";
 import upload from "../utils/upload.js";
+import {  PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient()
 
 const router = express.Router();
 
 router.route("/login").post(userLogin);
 router.route("/getValidUser").get(getValidUser);
-router.route("/authenticate").get(authenticateUser, (req, res, next) => {
+router.route("/authenticate").get(authenticateUser, async(req, res, next) => {
   try {
-    res.status(200).json({ message: "Access granted to protected route" });
+
+    const user = await prisma.users.findUnique({where:{
+      id:req.user.id
+    }})
+
+    res.status(200).json({user, message: "Access granted to protected route" });
     console.log("Authenticated");
   } catch (err) {
     return next(new AppError("unauthorized", 401));

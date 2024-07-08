@@ -151,7 +151,7 @@ export const authenticateUser = (req, res, next) => {
   const token = req.cookies.token;
   console.log(token);
   if (!token) {
-    return next(new AppError("Unauthorized!, Token is not found", 404));
+    return next(new AppError("Unauthorized!, Token is not found", 401));
   }
 
   try {
@@ -161,7 +161,7 @@ export const authenticateUser = (req, res, next) => {
     req.user = decoded; // Attach decoded user data to request object
     next();
   } catch (error) {
-    return next(new AppError("Unauthorized", 401));
+    return next(new AppError("Unauthorized", 403));
   }
 };
 
