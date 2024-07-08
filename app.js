@@ -39,6 +39,7 @@ app.use(
     origin: [
       "https://thepreview.pro",
       "https://sellpersonalitems.thepreview.pro",
+      "https://sellpersonalitem.vercel.app",
       "http://localhost:5173",
     ],
     credentials: true,
