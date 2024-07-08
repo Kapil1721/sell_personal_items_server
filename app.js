@@ -85,7 +85,7 @@ if (process.env.DEV && process.env.DEV === 'Yes') {
 } else {
   tempraryImageDirectory = '/tmp';
 }
-app.use("/tmp", express.static(path.join(__dirname, tempraryImageDirectory)));
+app.use("/tmp", express.static(tempraryImageDirectory));
 
 // routes
 
