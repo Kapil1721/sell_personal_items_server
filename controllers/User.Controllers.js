@@ -1,8 +1,9 @@
 import path from "path";
 import AppError from "../utils/appError.js";
-import fs from "fs";
+import fs, { stat } from "fs";
 import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
+import { count } from "console";
 
 const prisma = new PrismaClient();
 
@@ -22,7 +23,7 @@ export const addMembership = async (req, res, next) => {
 export const uploads = async (req, res, next) => {
   try {
     const { file } = req;
-    // console.log(file);
+    console.log(file);
     res.status(200).json({
       status: "success",
       file,
@@ -56,7 +57,8 @@ export const deleteUploads = async (req, res, next) => {
 
 export const postProduct = CatchAsync(async (req, res, next) => {
   // try {
-  const { name, description, category, images, _attachments } = req.body;
+  const { name, description, category, images, _attachments, active } =
+    req.body;
   const slug = Date.now() + name.replaceAll(" ", "-");
   const product = await prisma.listedItem.create({
     data: {
@@ -85,9 +87,73 @@ export const postProduct = CatchAsync(async (req, res, next) => {
   // } catch (error) {}
 });
 
+export const updateProduct = CatchAsync(async (req, res, next) => {
+  // try {
+  const { name, description, category, images, _attachments, post_id } =
+    req.body;
+
+  console.log(post_id, "post_id");
+  const existingProduct = await prisma.listedItem.findUnique({
+    where: {
+      post_id: post_id,
+    },
+  });
+  if (!existingProduct) {
+    return res
+      .status(404)
+      .json({ status: false, message: "Product not found" });
+  }
+
+  const slug = Date.now() + name.replaceAll(" ", "-");
+  const product = await prisma.listedItem.update({
+    where: {
+      post_id: post_id,
+    },
+    data: {
+      name,
+      desription: description,
+      category,
+      slug,
+      userId: req.user.id,
+      updatedAt: new Date(),
+    },
+  });
+
+  if (product) {
+    const newImages = [...images, ..._attachments].map((itm) => ({
+      imagesType: itm.type,
+      image: itm.url,
+      listedItem_id: product.post_id,
+    }));
+    // console.log(product, newImages);
+    // const oldImages = await prisma.images.findMany({
+    //   where: {
+    //     listedItem_id: post_id,
+    //   },
+    // });
+    // const _newImages = newImages.filter(
+    //   (item) => oldImages.find((itm) => itm.image === item.image)
+    // );
+    // const productImages = await prisma.images.create({
+    //   data: [...newImages],
+    // });
+    res.status(200).json({
+      status: true,
+      message: "Product has been updated successfully.",
+    });
+  }
+  // } catch (error) {}
+});
+
 export const getModerationProductsforAdmin = CatchAsync(
   async (req, res, next) => {
+    const { page, limit, sort, searchQuery } = req.query;
+    const order = sort ? (sort === "Oldest" ? "asc" : "desc") : "desc";
+
     const products = await prisma.listedItem.findMany({
+      where: {
+        name: { contains: searchQuery, mode: "insensitive" },
+      },
       include: {
         images: true,
         user: {
@@ -96,7 +162,11 @@ export const getModerationProductsforAdmin = CatchAsync(
           },
         },
       },
+      orderBy: {
+        createdAt: order,
+      },
     });
+
     // const user = await prisma.users.findFirst({
     //   where: {
     //     id: products.userId,
@@ -104,32 +174,49 @@ export const getModerationProductsforAdmin = CatchAsync(
     res.status(200).json({ status: true, products });
   }
 );
-
-export const updateModerationProductStatus = CatchAsync(
+export const getModerationProductsforAdminByID = CatchAsync(
   async (req, res, next) => {
-    const { product_id, status } = req.body;
-    const product = await prisma.listedItem.update({
+    const { id } = req.params;
+    const products = await prisma.listedItem.findFirst({
       where: {
-        post_id: product_id,
+        post_id: parseInt(id),
       },
-      data: {
-        status: status,
+      include: {
+        images: true,
+        comments: true,
+        views: true,
+        likes: true,
+        user: {
+          select: {
+            name: true,
+            username: true,
+            userType: true,
+            countryCode: true,
+            contactNumber: true,
+          },
+        },
       },
     });
+
+    // const user = await prisma.users.findFirst({
+    //   where: {
+    //     id: products.userId,
+    // })
     res.status(200).json({
       status: true,
-      message: `Product is ${
-        status === "Draft" ? "moved to draft" : "Approved"
-      } successfully.`,
+      products: {
+        ...products,
+        images: products.images.map((item) => ({ ...item, url: item.image })),
+      },
     });
   }
 );
 
-export const getMyProducts = CatchAsync(async (req, res, next) => {
-  const { id } = req.user;
-  const products = await prisma.listedItem.findMany({
+export const deleteModerateProducts = CatchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const product = await prisma.listedItem.delete({
     where: {
-      userId: id,
+      post_id: parseInt(id),
     },
     include: {
       images: true,
@@ -138,9 +225,189 @@ export const getMyProducts = CatchAsync(async (req, res, next) => {
       likes: true,
     },
   });
+  if (!product) {
+    return res.status(404).json({
+      status: false,
+      message: "Product not found",
+    });
+  }
+  products.images.forEach((image) => {
+    const file = image.image;
+    const imagePath = path.join(__dirname, "uploads", file);
+    if (fs.existsSync(imagePath)) {
+      // Delete the file
+      fs.unlinkSync(imagePath);
+    }
+  });
+
+  res.status(200).json({
+    status: true,
+    message: "Product deleted successfully",
+  });
+});
+
+export const updateModerationProductStatus = CatchAsync(
+  async (req, res, next) => {
+    const { product_id, status } = req.body;
+
+    if (status === "Approve") {
+      const product = await prisma.listedItem.update({
+        where: {
+          post_id: product_id,
+        },
+        data: {
+          status: "Active",
+          isApproved: true,
+        },
+      });
+      res.status(200).json({
+        status: true,
+        message: `Product is approved successfully.`,
+      });
+    }
+
+    if (status === "Decline") {
+      const product = await prisma.listedItem.update({
+        where: {
+          post_id: product_id,
+        },
+        data: {
+          status: status,
+        },
+      });
+      res.status(200).json({
+        status: true,
+        message: `Product is declined successfully.`,
+      });
+    }
+    if (status === "Draft") {
+      const product = await prisma.listedItem.update({
+        where: {
+          post_id: product_id,
+        },
+        data: {
+          status: "Draft",
+        },
+      });
+      res.status(200).json({
+        status: true,
+        message: `Product is ${
+          status === "Draft" ? "moved to draft" : "Approved"
+        } successfully.`,
+      });
+    }
+    if (status === "Publish") {
+      const product = await prisma.listedItem.update({
+        where: {
+          post_id: product_id,
+        },
+        data: {
+          status: "Active",
+        },
+      });
+      res.status(200).json({
+        status: true,
+        message: `Product is published successfully.`,
+      });
+    }
+  }
+);
+
+export const getMyProducts = CatchAsync(async (req, res, next) => {
+  const { id } = req.user;
+  const { page, limit, sort, searchQuery } = req.query;
+  const order = sort ? (sort === "Oldest" ? "asc" : "desc") : "desc";
+
+  const products = await prisma.listedItem.findMany({
+    where: {
+      userId: id,
+      name: { contains: searchQuery, mode: "insensitive" },
+    },
+    include: {
+      images: true,
+      comments: true,
+      views: true,
+      likes: true,
+    },
+    orderBy: {
+      createdAt: order,
+    },
+  });
 
   res.status(200).json({
     status: true,
     products,
+  });
+});
+
+export const getMyProduct = CatchAsync(async (req, res, next) => {
+  const { id } = req.user;
+  const product = await prisma.listedItem.findUnique({
+    where: {
+      post_id: parseInt(req.params.id.split("-")[0]),
+      userId: id,
+    },
+    include: {
+      images: true,
+      comments: true,
+      views: true,
+      likes: true,
+      user: {
+        select: {
+          name: true,
+          username: true,
+          userType: true,
+          countryCode: true,
+          contactNumber: true,
+        },
+      },
+    },
+  });
+  const views = await prisma.views.create({
+    data: {
+      postId: parseInt(req.params.id.split("-")[0]),
+      userId: id,
+    },
+  });
+  res.status(200).json({
+    status: true,
+    product,
+  });
+});
+
+export const deleteMyProduct = CatchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  console.log(id);
+  const products = await prisma.listedItem.delete({
+    where: {
+      post_id: parseInt(id),
+    },
+    include: {
+      images: true,
+      comments: true,
+      views: true,
+      likes: true,
+    },
+  });
+  if (!products) {
+    return res.status(404).json({
+      status: false,
+      message: "Product not found",
+    });
+  }
+
+  products.images.forEach((image) => {
+    const file = image.image;
+    const imagePath = path.join(__dirname, "uploads", file);
+    if (fs.existsSync(imagePath)) {
+      // Delete the file
+      fs.unlinkSync(imagePath);
+    }
+  });
+
+  res.status(200).json({
+    status: true,
+    message: "Product deleted successfully",
   });
 });

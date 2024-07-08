@@ -15,11 +15,12 @@ export const signToken = (id) => {
 };
 
 export const createSendToken = (user, statusCode, res) => {
+  console.log(user);
   const token = signToken(user.id);
   user.password = undefined;
   res.cookie("token", token, {
-    httpOnly: true,
-    sameSite: "strict",
+    httpOnly: false,
+    sameSite: "none",
     maxAge: 24 * 3600000, // 1 day in milliseconds
     secure: process.env.NODE_ENV === "production", // Only set secure cookie in production
   });
@@ -113,12 +114,20 @@ export const userLogin = CatchAsync(async (req, res, next) => {
       new AppError("Please provide username/email and password", 400)
     );
   }
+  // const user = await prisma.users.findFirst({
+  //   where: {
+  //     OR: [
+  //       { [email.toLowerCase()]: usernameoremail },
+  //       { [username.toLowerCase()]: usernameoremail },
+  //     ],
+  //   },
+  // });
 
   const user = await prisma.users.findFirst({
     where: {
       OR: [
-        { email: usernameoremail.toLowerCase() },
-        { username: usernameoremail.toLowerCase() },
+        { email: usernameoremail },
+        { username: usernameoremail },
       ],
     },
   });
@@ -142,7 +151,7 @@ export const authenticateUser = (req, res, next) => {
   const token = req.cookies.token;
   console.log(token);
   if (!token) {
-    return next(new AppError("Unauthorized!, Token is not found", 404));
+    return next(new AppError("Unauthorized!, Token is not found", 401));
   }
 
   try {
@@ -152,27 +161,47 @@ export const authenticateUser = (req, res, next) => {
     req.user = decoded; // Attach decoded user data to request object
     next();
   } catch (error) {
-    return next(new AppError("Unauthorized", 401));
+    return next(new AppError("Unauthorized", 403));
   }
 };
 
-export const getValidUser = (req, res, next) => {
-  let token = req.headers["authorization"]?.split(" ")[1];
-
+export const getValidUser = async (req, res, next) => {
   try {
-    if (!token || req.headers["authorization"]?.split(" ")[0] !== "Bearer") {
-      return res.status(401).json({
-        status: 401,
-        message: "Unauthorized Access. Please log in again",
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(404).json({
+        status: false,
+        user: null,
       });
     }
 
     const isVerified = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (isVerified) {
-      req.body.userId = isVerified.id;
-      next();
+    if (!isVerified) {
+      return res.status(401).json({
+        status: false,
+        message: "unauthorised",
+        user: null,
+      });
     }
+
+    console.log(isVerified, "jdgfjhg");
+    let user = await prisma.users.findUnique({
+      where: { id: isVerified.id },
+    });
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "unauthorised",
+        user: null,
+      });
+    }
+    user.password = undefined;
+    user.verification = undefined;
+    return res.status(200).json({
+      status: true,
+      user: user,
+    });
   } catch (error) {
     if (error) {
       if (

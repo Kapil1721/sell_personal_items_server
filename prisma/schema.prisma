@@ -1,12 +1,11 @@
-
-datasource db {
-  provider = "postgresql"
-  url = env("sellpersonal_PRISMA_URL") // uses connection pooling
-  directUrl = env("sellpersonal_URL_NON_POOLING") // uses a direct connection
+generator client {
+  provider = "prisma-client-js"
 }
 
-generator client {
-    provider = "prisma-client-js"
+datasource db {
+  provider  = "postgresql"
+  url       = env("sellpersonal_PRISMA_URL")
+  directUrl = env("sellpersonal_URL_NON_POOLING")
 }
 
 model Users {
@@ -30,141 +29,166 @@ model Users {
     donations     Donations[]
 }
 
-enum UserType {
-    Recipient
-    Donor
-}
+// enum UserType {
+//     Recipient
+//     Donor
+// }
 
-enum Role {
-    USER
-    ADMIN
-}
+// enum Role {
+//     USER
+//     ADMIN
+// }
 
 model Donations {
-    id          Int       @id @default(autoincrement())
-    Users       Users?    @relation(fields: [usersId], references: [id])
-    usersId     Int?
-    name        String
-    email       String
-    countryCode String
-    phone       String
-    items       String
-    amount      Decimal?  @db.Decimal(10, 2)
-    createdAt   DateTime? @default(now())
-    updatedAt   DateTime? @updatedAt
+  id          Int       @id @default(autoincrement())
+  usersId     Int?
+  name        String
+  email       String
+  countryCode String
+  phone       String
+  items       String
+  amount      Decimal?  @db.Decimal(10, 2)
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime? @updatedAt
+  Users       Users?    @relation(fields: [usersId], references: [id])
 }
 
-// Define the Memberships model
 model Memberships {
-    id            Int       @id @default(autoincrement())
-    user          Users[]
-    plan          Plan      @relation(fields: [planId], references: [id])
-    planId        Int
-    startDate     DateTime  @default(now())
-    endDate       DateTime?
-    status        Boolean   @default(true) // active, paused, canceled, expired, etc.
-    paymentMethod String
-    paymentStatus String
-    active        Boolean   @default(true)
+  id            Int       @id @default(autoincrement())
+  planId        Int
+  startDate     DateTime  @default(now())
+  endDate       DateTime?
+  status        Boolean   @default(true)
+  paymentMethod String
+  paymentStatus String
+  active        Boolean   @default(true)
+  plan          Plan      @relation(fields: [planId], references: [id])
+  user          Users[]
 }
 
-// Define the Plan model
 model Plan {
-    id           Int           @id @default(autoincrement())
-    name         String
-    description  String?
-    price        Decimal       @db.Decimal(10, 2)
-    actualPrice  Decimal       @default(0) @db.Decimal(10, 2)
-    discountType DiscountTypes @default(Flat)
-    discount     Float         @default(0)
-    duration     Int // Duration in months, years, etc.
-    currency     String        @db.VarChar(30)
-    active       Boolean?      @default(true)
-    createdAt    DateTime?     @default(now())
-    updatedAt    DateTime?     @updatedAt
-    features     Features[] // Array of features included in the plan
-    Memberships  Memberships[]
+  id           Int           @id @default(autoincrement())
+  name         String
+  description  String?
+  price        Decimal       @db.Decimal(10, 2)
+  actualPrice  Decimal       @default(0) @db.Decimal(10, 2)
+  discountType DiscountTypes @default(Flat)
+  discount     Float         @default(0)
+  duration     Int
+  currency     String        @db.VarChar(30)
+  active       Boolean?      @default(true)
+  createdAt    DateTime?     @default(now())
+  updatedAt    DateTime?     @updatedAt
+  features     Features[]
+  Memberships  Memberships[]
 }
 
-enum DiscountTypes {
-    Flat
-    Percentage
-}
-
-//define features of plane
 model Features {
-    id          Int     @id @default(autoincrement())
-    name        String
-    description String?
-    active      Boolean @default(true)
-    Plan        Plan?   @relation(fields: [planId], references: [id])
-    planId      Int?
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  active      Boolean @default(true)
+  planId      Int?
+  Plan        Plan?   @relation(fields: [planId], references: [id])
 }
-
-// listed items
 
 model ListedItem {
-    post_id    Int                @id @default(autoincrement())
-    slug       String             @unique @db.VarChar(250)
-    name       String             @db.VarChar(100)
-    desription String?
-    category   String             @db.VarChar(100)
-    expires    DateTime?
-    likes      Likes[]
-    views      Views[]
-    images     Images[]
-    createdAt  DateTime           @default(now())
-    updatedAt  DateTime           @updatedAt
-    active     Boolean            @default(true)
-    status     ListedItem_Status? @default(Draft)
-    user       Users              @relation(fields: [userId], references: [id])
-    userId     Int
-    comments   Comment[]
+  post_id    Int                @id @default(autoincrement())
+  slug       String             @unique @db.VarChar(250)
+  name       String             @db.VarChar(100)
+  desription String?
+  category   String             @db.VarChar(100)
+  expires    DateTime?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  active     Boolean            @default(true)
+  isApproved Boolean            @default(false)
+  status     ListedItem_Status? @default(Draft)
+  userId     Int
+  comments   Comment[]
+  images     Images[]
+  likes      Likes[]
+  reviews    Reviews[]
+  user       Users              @relation(fields: [userId], references: [id])
+  views      Views[]
 }
 
-enum ListedItem_Status {
-    Active
-    Pending
-    Draft
+model Reviews {
+  id                Int             @id @default(autoincrement())
+  rating            Int
+  comment           String
+  reviewImages      ReviewsImages[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  ListedItem        ListedItem?     @relation(fields: [listedItemPost_id], references: [post_id])
+  listedItemPost_id Int?
+}
+
+model ReviewsImages {
+  id        Int      @id @default(autoincrement())
+  image     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Reviews   Reviews? @relation(fields: [reviewsId], references: [id])
+  reviewsId Int?
 }
 
 model Views {
-    id         Int        @id @default(autoincrement())
-    userId     Int
-    postId     Int
-    createdAt  DateTime   @default(now())
-    updatedAt  DateTime   @updatedAt
-    listedItem ListedItem @relation(fields: [postId], references: [post_id])
+  id         Int        @id @default(autoincrement())
+  userId     Int
+  postId     Int
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  listedItem ListedItem @relation(fields: [postId], references: [post_id])
 }
 
 model Likes {
-    id                Int         @id @default(autoincrement())
-    user_id           Int
-    post_id           Int
-    createdAt         DateTime    @default(now())
-    modifiedAt        DateTime    @updatedAt
-    ListedItem        ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
-    listedItemPost_id Int?
+  id                Int         @id @default(autoincrement())
+  user_id           Int
+  post_id           Int
+  createdAt         DateTime    @default(now())
+  modifiedAt        DateTime    @updatedAt
+  listedItemPost_id Int?
+  ListedItem        ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
 }
 
 model Comment {
-    id                Int         @id @default(autoincrement())
-    content           String
-    ListedItem        ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
-    listedItemPost_id Int?
+  id                Int         @id @default(autoincrement())
+  content           String
+  listedItemPost_id Int?
+  ListedItem        ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
 }
 
-// listedItems images
-
 model Images {
-    id            Int         @id @default(autoincrement())
-    imagesType    ImageTypes? @default(GALLARY)
-    image         String
-    ListedItem    ListedItem? @relation(fields: [listedItem_id], references: [post_id])
-    listedItem_id Int?
+  id            Int         @id @default(autoincrement())
+  imagesType    ImageTypes? @default(GALLARY)
+  image         String
+  listedItem_id Int?
+  ListedItem    ListedItem? @relation(fields: [listedItem_id], references: [post_id])
+}
+
+enum UserType {
+  Recipient
+  Donor
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum DiscountTypes {
+  Flat
+  Percentage
+}
+
+enum ListedItem_Status {
+  Active
+  Pending
+  Draft
 }
 
 enum ImageTypes {
-    GALLARY
-    ATTACHMENTS
+  GALLARY
+  ATTACHMENTS
 }
