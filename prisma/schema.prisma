@@ -9,24 +9,40 @@ datasource db {
 }
 
 model Users {
-    id            Int          @id @default(autoincrement())
-    username      String       @unique @db.VarChar(30)
-    email         String       @unique @db.VarChar(50)
-    name          String       @db.VarChar(50)
-    countryCode   String       @db.VarChar(10)
-    contactNumber String       @db.VarChar(50)
-    password      String       @db.VarChar(250)
-    verification  String?      @db.VarChar(255)
-    verified      Boolean?     @default(false)
-    active        Boolean?     @default(true)
-    userType      UserType?    @default(Recipient)
-    role          Role         @default(USER)
-    createdAt     DateTime?    @default(now())
-    updatedAt     DateTime?    @updatedAt
-    membership    Memberships? @relation(fields: [membershipId], references: [id])
-    membershipId  Int?
-    listedItem    ListedItem[]
-    donations     Donations[]
+  id                 Int           @id @default(autoincrement())
+  username           String        @unique @db.VarChar(30)
+  email              String        @unique @db.VarChar(50)
+  name               String        @db.VarChar(50)
+  countryCode        String        @db.VarChar(10)
+  address            String?       @db.VarChar(500)
+  profileImage       String?
+  profileDescription String?
+  contactNumber      String        @db.VarChar(50)
+  whatsApp           Boolean?      @default(false)
+  viber              Boolean?      @default(true)
+  password           String        @db.VarChar(250)
+  verification       String?       @db.VarChar(255)
+  verified           Boolean?      @default(false)
+  active             Boolean?      @default(true)
+  userType           UserType?     @default(Recipient)
+  role               Role          @default(USER)
+  createdAt          DateTime?     @default(now())
+  updatedAt          DateTime?     @updatedAt
+  membership         Memberships?  @relation(fields: [membershipId], references: [id])
+  membershipId       Int?
+  listedItem         ListedItem[]
+  donations          Donations[]
+  socailLinks        SocialLinks[]
+}
+
+model SocialLinks {
+  id         Int       @id @default(autoincrement())
+  Users      Users?    @relation(fields: [usersId], references: [id])
+  usersId    Int?
+  linkName   String    @db.VarChar(50)
+  socialLink String    @db.VarChar(500)
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
 }
 
 // enum UserType {

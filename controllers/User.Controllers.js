@@ -3,6 +3,7 @@ import AppError from "../utils/appError.js";
 import fs, { stat } from "fs";
 import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
+import bcrypt from "bcryptjs";
 import { count } from "console";
 
 const prisma = new PrismaClient();
@@ -34,6 +35,7 @@ export const uploads = async (req, res, next) => {
     );
   }
 };
+
 export const deleteUploads = async (req, res, next) => {
   try {
     const { file } = req.params;
@@ -406,5 +408,257 @@ export const deleteMyProduct = CatchAsync(async (req, res, next) => {
   res.status(200).json({
     status: true,
     message: "Product deleted successfully",
+  });
+});
+
+//profile
+export const deleteUser = CatchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const user = await prisma.users.delete({
+    where: {
+      id: parseInt(id),
+    },
+    include: {
+      images: true,
+      donations: true,
+      socailLinks: true,
+      listedItem: true,
+      membership: true,
+    },
+  });
+  if (!user) {
+    return res.status(404).json({
+      status: false,
+      message: "User not found",
+    });
+  }
+  user.images.forEach((image) => {
+    const file = image.image;
+    const imagePath = path.join(__dirname, "uploads", file);
+    if (fs.existsSync(imagePath)) {
+      // Delete the file
+      fs.unlinkSync(imagePath);
+    }
+  });
+  res.status(200).json({
+    status: true,
+    message: "User deleted successfully",
+  });
+});
+
+export const getProfile = CatchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const user = await prisma.users.findUnique({
+    where: {
+      id: parseInt(id),
+    },
+    include: {
+      donations: true,
+      socailLinks: true,
+      listedItem: true,
+      membership: true,
+    },
+  });
+  if (!user) {
+    return res.status(404).json({
+      status: false,
+      message: "User not found",
+    });
+  }
+  res.status(200).json({
+    status: true,
+    message: "User found successfully",
+    user: user,
+  });
+});
+
+export const updateSocialMedia = CatchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { socialMedia } = req.body;
+  const user = await prisma.users.update({
+    where: {
+      id: parseInt(id),
+    },
+    data: {
+      socailLinks: socialMedia,
+    },
+    include: {
+      socailLinks: true,
+    },
+  });
+  if (!user) {
+    return res.status(404).json({
+      status: false,
+      message: "User not found",
+    });
+  }
+  res.status(200).json({
+    status: true,
+    message: "Data saved successfully",
+    user: user,
+  });
+});
+
+export const upadatePassword = CatchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { oldPassword, newPassord } = req.body;
+
+  const user = await prisma.users.findUnique({
+    select: {
+      id: true,
+      password: true,
+    },
+    where: {
+      id: parseInt(id),
+    },
+  });
+
+  if (!user) {
+    return res.status(404).json({
+      status: false,
+      message: "User not found",
+    });
+  }
+
+  const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+  if (!passwordMatch) {
+    // res.clearCookie("token");
+    return res.status(404).json({ message: "Invalid Password" });
+  }
+
+  let newUser = await prisma.users.update({
+    where: {
+      id: parseInt(id),
+    },
+    data: {
+      password: newPassord,
+    },
+  });
+
+  newUser.password = undefined;
+
+  res.status(200).json({
+    status: true,
+    message: "Password updated successfully",
+    user: newUser,
+  });
+});
+
+export const upadateEmail = CatchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { currentEmail, newEmail } = req.body;
+
+  const user = await prisma.users.findUnique({
+    select: {
+      id: true,
+      email: true,
+    },
+    where: {
+      id: parseInt(id),
+    },
+  });
+
+  if (!user) {
+    return res.status(404).json({
+      status: false,
+      message: "User not found",
+    });
+  }
+
+  if (currentEmail != user.email) {
+    // res.clearCookie("token");
+    return res.status(404).json({ message: "Invalid email address" });
+  }
+
+  let newUser = await prisma.users.update({
+    where: {
+      id: parseInt(id),
+    },
+    data: {
+      email: newEmail,
+    },
+  });
+  newUser.password === undefined;
+
+  res.status(200).json({
+    status: true,
+    message: "Password updated successfully",
+    user: newUser,
+  });
+});
+
+export const updateProfileImage = CatchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { image } = req.body;
+  const user = await prisma.users.findUnique({
+    select: {
+      id: true,
+      image: true,
+    },
+    where: {
+      id: parseInt(id),
+    },
+  });
+  if (!user) {
+    return res.status(404).json({
+      status: false,
+      message: "User not found",
+    });
+  }
+  if (!image) {
+    return res.status(404).json({
+      status: false,
+      message: "Image not found",
+    });
+  }
+  let newUser = await prisma.users.update({
+    where: {
+      id: parseInt(id),
+    },
+    data: {
+      image: image,
+    },
+  });
+  res.status(200).json({
+    status: true,
+    message: "Profile image updated successfully",
+    user: newUser,
+  });
+});
+
+export const updateAccountDetails = CatchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { name, email, phone } = req.body;
+  const user = await prisma.users.findUnique({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+    },
+    where: {
+      id: parseInt(id),
+    },
+  });
+  if (!user) {
+    return res.status(404).json({
+      status: false,
+      message: "User not found",
+    });
+  }
+  let newUser = await prisma.users.update({
+    where: {
+      id: parseInt(id),
+    },
+    data: {
+      name: name,
+      email: email,
+      phone: phone,
+    },
+  });
+  res.status(200).json({
+    status: true,
+    message: "Account details updated successfully",
+    user: newUser,
   });
 });
