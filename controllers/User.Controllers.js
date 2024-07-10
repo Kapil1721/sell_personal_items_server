@@ -414,9 +414,23 @@ export const deleteMyProduct = CatchAsync(async (req, res, next) => {
 //profile
 export const deleteUser = CatchAsync(async (req, res, next) => {
   const { id } = req.user;
+
+  const _user = await prisma.users.findUnique({
+    where: {
+      id: parseInt(id),
+    },
+  });
+  if (user.role === "ADMIN") {
+    return res.status(403).json({
+      status: false,
+      message: "You can't delete admin account",
+    });
+  }
+
   const user = await prisma.users.delete({
     where: {
       id: parseInt(id),
+      role: "USER",
     },
     include: {
       donations: true,
