@@ -35,14 +35,15 @@ model Users {
   socailLinks        SocialLinks[]
 }
 
+
 model SocialLinks {
-  id         Int       @id @default(autoincrement())
-  Users      Users?    @relation(fields: [usersId], references: [id])
+  id         Int     @id @default(autoincrement())
+  Users      Users?  @relation(fields: [usersId], references: [id])
   usersId    Int?
-  linkName   String    @db.VarChar(50)
-  socialLink String    @db.VarChar(500)
-  createdAt  DateTime? @default(now())
-  updatedAt  DateTime? @updatedAt
+  linkName   String @unique @default("") @db.VarChar(50)
+  socialLink String? @unique @default("") @db.VarChar(500)
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
 }
 
 // enum UserType {

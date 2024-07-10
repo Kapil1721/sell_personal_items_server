@@ -4,7 +4,7 @@ import fs, { stat } from "fs";
 import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
 import bcrypt from "bcryptjs";
-import { count } from "console";
+import { count, log } from "console";
 
 const prisma = new PrismaClient();
 
@@ -447,15 +447,14 @@ export const deleteUser = CatchAsync(async (req, res, next) => {
 });
 
 export const getProfile = CatchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const user = await prisma.users.findUnique({
+  const { id } = req.user;
+  let user = await prisma.users.findUnique({
     where: {
       id: parseInt(id),
     },
     include: {
       donations: true,
       socailLinks: true,
-      listedItem: true,
       membership: true,
     },
   });
@@ -465,25 +464,20 @@ export const getProfile = CatchAsync(async (req, res, next) => {
       message: "User not found",
     });
   }
+
   res.status(200).json({
     status: true,
     message: "User found successfully",
-    user: user,
+    user: { ...user, password: undefined, verification: undefined },
   });
 });
 
 export const updateSocialMedia = CatchAsync(async (req, res, next) => {
-  const { id } = req.params;
+  const { id } = req.user;
   const { socialMedia } = req.body;
-  const user = await prisma.users.update({
+  const user = await prisma.users.findUnique({
     where: {
       id: parseInt(id),
-    },
-    data: {
-      socailLinks: socialMedia,
-    },
-    include: {
-      socailLinks: true,
     },
   });
   if (!user) {
@@ -492,16 +486,32 @@ export const updateSocialMedia = CatchAsync(async (req, res, next) => {
       message: "User not found",
     });
   }
-  res.status(200).json({
+
+  const deletedLinks = await prisma.socialLinks.deleteMany({
+    where: {
+      usersId: parseInt(id),
+    },
+  });
+
+  const newSocialMediaLinks = await prisma.socialLinks.createMany({
+    data: socialMedia.map((item) => {
+      return {
+        usersId: parseInt(id),
+        linkName: item.label,
+        socialLink: item.link,
+      };
+    }),
+  });
+  return res.status(200).json({
     status: true,
     message: "Data saved successfully",
-    user: user,
+    newSocialMediaLinks,
   });
 });
 
 export const upadatePassword = CatchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const { oldPassword, newPassord } = req.body;
+  const { id } = req.user;
+  const { oldPassword, newPassword } = req.body;
 
   const user = await prisma.users.findUnique({
     select: {
@@ -521,17 +531,19 @@ export const upadatePassword = CatchAsync(async (req, res, next) => {
   }
 
   const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+  console.log(passwordMatch,oldPassword, user.password);
   if (!passwordMatch) {
     // res.clearCookie("token");
-    return res.status(404).json({ message: "Invalid Password" });
+    return res.status(400).json({ message: "Invalid Password" });
   }
-
+  const hashedPassword = await bcrypt.hash(newPassword,12)
+  log(hashedPassword);
   let newUser = await prisma.users.update({
     where: {
       id: parseInt(id),
     },
     data: {
-      password: newPassord,
+      password: hashedPassword,
     },
   });
 
@@ -545,7 +557,7 @@ export const upadatePassword = CatchAsync(async (req, res, next) => {
 });
 
 export const upadateEmail = CatchAsync(async (req, res, next) => {
-  const { id } = req.params;
+  const { id } = req.user;
   const { currentEmail, newEmail } = req.body;
 
   const user = await prisma.users.findUnique({
@@ -565,9 +577,15 @@ export const upadateEmail = CatchAsync(async (req, res, next) => {
     });
   }
 
-  if (currentEmail != user.email) {
-    // res.clearCookie("token");
-    return res.status(404).json({ message: "Invalid email address" });
+  const checkAlreadyExists = await prisma.users.findUnique({
+    where: {
+      email: newEmail,
+    },
+  });
+  if (checkAlreadyExists) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Email already exists" });
   }
 
   let newUser = await prisma.users.update({
@@ -578,23 +596,20 @@ export const upadateEmail = CatchAsync(async (req, res, next) => {
       email: newEmail,
     },
   });
-  newUser.password === undefined;
+  newUser.password = undefined;
+  newUser.verification = undefined;
 
-  res.status(200).json({
+  return res.status(200).json({
     status: true,
-    message: "Password updated successfully",
-    user: newUser,
+    message: "Email updated successfully",
+    currentEmail: newUser.email,
   });
 });
 
 export const updateProfileImage = CatchAsync(async (req, res, next) => {
-  const { id } = req.params;
+  const { id } = req.user;
   const { image } = req.body;
   const user = await prisma.users.findUnique({
-    select: {
-      id: true,
-      image: true,
-    },
     where: {
       id: parseInt(id),
     },
@@ -616,26 +631,35 @@ export const updateProfileImage = CatchAsync(async (req, res, next) => {
       id: parseInt(id),
     },
     data: {
-      image: image,
+      profileImage: image,
     },
   });
+  if (!newUser) {
+    return res.status(404).json({
+      status: false,
+      message: "User not found",
+    });
+  }
   res.status(200).json({
     status: true,
     message: "Profile image updated successfully",
-    user: newUser,
+    user: { ...newUser, password: undefined, verification: undefined },
   });
 });
 
 export const updateAccountDetails = CatchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const { name, email, phone } = req.body;
+  const { id } = req.user;
+  const {
+    name,
+    userType,
+    countryCode,
+    contactNumber,
+    whatsApp,
+    viber,
+    profileDescription,
+    address,
+  } = req.body;
   const user = await prisma.users.findUnique({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-    },
     where: {
       id: parseInt(id),
     },
@@ -651,14 +675,21 @@ export const updateAccountDetails = CatchAsync(async (req, res, next) => {
       id: parseInt(id),
     },
     data: {
-      name: name,
-      email: email,
-      phone: phone,
+      name,
+      userType,
+      countryCode,
+      contactNumber,
+      whatsApp,
+      viber,
+      profileDescription,
+      address,
+      updatedAt: new Date(),
     },
   });
+
   res.status(200).json({
     status: true,
     message: "Account details updated successfully",
-    user: newUser,
+    user: { ...newUser, password: undefined, verification: undefined },
   });
 });
