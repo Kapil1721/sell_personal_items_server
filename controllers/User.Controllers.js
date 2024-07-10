@@ -413,13 +413,12 @@ export const deleteMyProduct = CatchAsync(async (req, res, next) => {
 
 //profile
 export const deleteUser = CatchAsync(async (req, res, next) => {
-  const { id } = req.params;
+  const { id } = req.user;
   const user = await prisma.users.delete({
     where: {
       id: parseInt(id),
     },
     include: {
-      images: true,
       donations: true,
       socailLinks: true,
       listedItem: true,
@@ -432,17 +431,9 @@ export const deleteUser = CatchAsync(async (req, res, next) => {
       message: "User not found",
     });
   }
-  user.images.forEach((image) => {
-    const file = image.image;
-    const imagePath = path.join(__dirname, "uploads", file);
-    if (fs.existsSync(imagePath)) {
-      // Delete the file
-      fs.unlinkSync(imagePath);
-    }
-  });
-  res.status(200).json({
+  return res.status(200).json({
     status: true,
-    message: "User deleted successfully",
+    message: "Your profile deleted successfully",
   });
 });
 
@@ -531,12 +522,12 @@ export const upadatePassword = CatchAsync(async (req, res, next) => {
   }
 
   const passwordMatch = await bcrypt.compare(oldPassword, user.password);
-  console.log(passwordMatch,oldPassword, user.password);
+  console.log(passwordMatch, oldPassword, user.password);
   if (!passwordMatch) {
     // res.clearCookie("token");
     return res.status(400).json({ message: "Invalid Password" });
   }
-  const hashedPassword = await bcrypt.hash(newPassword,12)
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
   log(hashedPassword);
   let newUser = await prisma.users.update({
     where: {

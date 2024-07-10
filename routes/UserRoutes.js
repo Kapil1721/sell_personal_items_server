@@ -25,6 +25,7 @@ import {
   updateSocialMedia,
   upadatePassword,
   upadateEmail,
+  deleteUser,
 } from "../controllers/User.Controllers.js";
 import { getPlans } from "../controllers/Membership.Controller.js";
 import { createDonation } from "../controllers/Donation.Controller.js";
@@ -38,6 +39,7 @@ router.route("/login").post(userLogin);
 router.route("/getValidUser").get(authenticateUser, getValidUser);
 router.route("/profile").get(authenticateUser, getProfile);
 router.route("/profile").put(authenticateUser, updateAccountDetails);
+router.route("/profile").delete(authenticateUser, deleteUser);
 router.route("/profile/image").put(authenticateUser, updateProfileImage);
 router.route("/profile/socialmedia").put(authenticateUser, updateSocialMedia);
 router.route("/profile/password").put(authenticateUser, upadatePassword);
