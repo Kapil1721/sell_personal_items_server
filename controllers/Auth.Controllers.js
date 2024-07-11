@@ -34,6 +34,11 @@ export const createSendToken = (user, statusCode, res) => {
   });
 };
 
+export const setCokie = CatchAsync(async (req, res, next) => {
+  if (!req.cookies.token) return res.status(200).json({ status: false });
+  res.status(200).json({status:"success"})
+});
+
 export const userSignUp = CatchAsync(async (req, res, next) => {
   try {
     const verificationToken = crypto.randomBytes(24).toString("hex");
@@ -125,10 +130,7 @@ export const userLogin = CatchAsync(async (req, res, next) => {
 
   const user = await prisma.users.findFirst({
     where: {
-      OR: [
-        { email: usernameoremail },
-        { username: usernameoremail },
-      ],
+      OR: [{ email: usernameoremail }, { username: usernameoremail }],
     },
   });
 

@@ -2,6 +2,7 @@ import express from "express";
 import {
   authenticateUser,
   getValidUser,
+  setCokie,
   userLogin,
   userLogout,
   userSignUp,
@@ -36,6 +37,7 @@ const prisma = new PrismaClient();
 const router = express.Router();
 
 router.route("/login").post(userLogin);
+router.route("/setcookie").post(setCokie);
 router.route("/getValidUser").get(authenticateUser, getValidUser);
 router.route("/profile").get(authenticateUser, getProfile);
 router.route("/profile").put(authenticateUser, updateAccountDetails);
