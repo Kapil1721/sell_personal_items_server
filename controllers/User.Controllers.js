@@ -420,7 +420,7 @@ export const deleteUser = CatchAsync(async (req, res, next) => {
       id: parseInt(id),
     },
   });
-  if (user.role === "ADMIN") {
+  if (_user.role === "ADMIN") {
     return res.status(403).json({
       status: false,
       message: "You can't delete admin account",
@@ -436,7 +436,6 @@ export const deleteUser = CatchAsync(async (req, res, next) => {
       donations: true,
       socailLinks: true,
       listedItem: true,
-      membership: true,
     },
   });
   if (!user) {

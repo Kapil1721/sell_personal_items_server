@@ -28,22 +28,108 @@ model Users {
   role               Role          @default(USER)
   createdAt          DateTime?     @default(now())
   updatedAt          DateTime?     @updatedAt
-  membership         Memberships?  @relation(fields: [membershipId], references: [id])
-  membershipId       Int?
+  membership         Memberships?
   listedItem         ListedItem[]
   donations          Donations[]
   socailLinks        SocialLinks[]
 }
 
+model Memberships {
+  id                 Int                @id @default(autoincrement())
+  startDate          DateTime
+  endDate            DateTime?
+  status             SubscriptionStatus
+  userId             Int                @unique
+  user               Users              @relation(fields: [userId], references: [id])
+  subscriptionPlanId Int
+  subscriptionPlan   SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id])
+  payments           Payment[]
+  refunds            Refund[]
+  active             Boolean?           @default(true)
+  createdAt          DateTime?          @default(now())
+  updatedAt          DateTime?          @updatedAt
+}
+
+model SubscriptionPlan {
+  id           Int            @id @default(autoincrement())
+  name         String
+  price        Float
+  priceRate    DurationTypes? @default(MONTH)
+  duration     Int 
+  durationType DurationTypes? @default(MONTH)
+  offerType      OfferType?
+  offerValue     Float?
+  active         Boolean?      @default(true)
+  createdAt      DateTime?     @default(now())
+  updatedAt      DateTime?     @updatedAt
+  oneTimePayment Boolean?      @default(false)
+  subscriptions  Memberships[]
+  features       PlanFeature[]
+}
+
+model Feature {
+  id          Int           @id @default(autoincrement())
+  name        String
+  description String?
+  plans       PlanFeature[]
+}
+
+model PlanFeature {
+  id                 Int              @id @default(autoincrement())
+  subscriptionPlan   SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id])
+  subscriptionPlanId Int
+  feature            Feature          @relation(fields: [featureId], references: [id])
+  featureId          Int
+}
+
+model Payment {
+  id              Int         @id @default(autoincrement())
+  amount          Float
+  currency        String
+  paymentDate     DateTime
+  subscriptionId  Int
+  subscription    Memberships @relation(fields: [subscriptionId], references: [id])
+  stripePaymentId String
+}
+
+model Refund {
+  id             Int         @id @default(autoincrement())
+  amount         Float
+  currency       String
+  refundDate     DateTime
+  subscriptionId Int
+  subscription   Memberships @relation(fields: [subscriptionId], references: [id])
+  stripeRefundId String
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum DurationTypes {
+  DAY
+  MONTH
+  YEAR
+}
+
+enum OfferType {
+  FLAT
+  PERCENTAGE
+  PAYMENTBASIS
+  ONETIME
+}
 
 model SocialLinks {
-  id         Int     @id @default(autoincrement())
-  Users      Users?  @relation(fields: [usersId], references: [id])
+  id         Int       @id @default(autoincrement())
+  Users      Users?    @relation(fields: [usersId], references: [id])
   usersId    Int?
-  linkName   String @unique @default("") @db.VarChar(50)
-  socialLink String? @unique @default("") @db.VarChar(500)
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
+  linkName   String    @unique @default("") @db.VarChar(50)
+  socialLink String?   @unique @default("") @db.VarChar(500)
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
 }
 
 // enum UserType {
@@ -70,44 +156,43 @@ model Donations {
   Users       Users?    @relation(fields: [usersId], references: [id])
 }
 
-model Memberships {
-  id            Int       @id @default(autoincrement())
-  planId        Int
-  startDate     DateTime  @default(now())
-  endDate       DateTime?
-  status        Boolean   @default(true)
-  paymentMethod String
-  paymentStatus String
-  active        Boolean   @default(true)
-  plan          Plan      @relation(fields: [planId], references: [id])
-  user          Users[]
-}
+// model Memberships {
+//   id            Int       @id @default(autoincrement())
+//   planId        Int
+//   startDate     DateTime  @default(now())
+//   endDate       DateTime?
+//   status        Boolean   @default(true)
+//   paymentMethod String
+//   paymentStatus String
+//   active        Boolean   @default(true)
+//   plan          Plan      @relation(fields: [planId], references: [id])
+//   user          Users[]
+// }
 
-model Plan {
-  id           Int           @id @default(autoincrement())
-  name         String
-  description  String?
-  price        Decimal       @db.Decimal(10, 2)
-  actualPrice  Decimal       @default(0) @db.Decimal(10, 2)
-  discountType DiscountTypes @default(Flat)
-  discount     Float         @default(0)
-  duration     Int
-  currency     String        @db.VarChar(30)
-  active       Boolean?      @default(true)
-  createdAt    DateTime?     @default(now())
-  updatedAt    DateTime?     @updatedAt
-  features     Features[]
-  Memberships  Memberships[]
-}
+// model Plan {
+//   id           Int           @id @default(autoincrement())
+//   name         String
+//   description  String?
+//   price        Decimal       @db.Decimal(10, 2)
+//   actualPrice  Decimal       @default(0) @db.Decimal(10, 2)
+//   discountType DiscountTypes @default(OneTimePayment)
+//   discount     Float         @default(0)
+//   duration     Int
+//   currency     String?       @default("$") @db.VarChar(30)
+//   active       Boolean?      @default(true)
+//   createdAt    DateTime?     @default(now())
+//   updatedAt    DateTime?     @updatedAt
+//   planFeatures Features[]
+//   Memberships  Memberships[]
+// }
 
-model Features {
-  id          Int     @id @default(autoincrement())
-  name        String
-  description String?
-  active      Boolean @default(true)
-  planId      Int?
-  Plan        Plan?   @relation(fields: [planId], references: [id])
-}
+// model Features {
+//   id          Int     @id @default(autoincrement())
+//   name        String
+//   description String?
+//   active      Boolean @default(true)
+//   plans       Plan[]
+// }
 
 model ListedItem {
   post_id    Int                @id @default(autoincrement())
@@ -192,11 +277,6 @@ enum UserType {
 enum Role {
   USER
   ADMIN
-}
-
-enum DiscountTypes {
-  Flat
-  Percentage
 }
 
 enum ListedItem_Status {

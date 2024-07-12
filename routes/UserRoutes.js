@@ -28,7 +28,7 @@ import {
   upadateEmail,
   deleteUser,
 } from "../controllers/User.Controllers.js";
-import { getPlans } from "../controllers/Membership.Controller.js";
+import { getPlans, getPlansById } from "../controllers/Membership.Controller.js";
 import { createDonation } from "../controllers/Donation.Controller.js";
 import upload from "../utils/upload.js";
 import { PrismaClient } from "@prisma/client";
@@ -68,6 +68,7 @@ router.route("/logout").post(userLogout);
 // for membership
 router.route("/membership").post(authenticateUser, addMembership);
 router.route("/plans").get(getPlans);
+router.route("/plans/:id").get(getPlansById);
 
 // for donation
 router.route("/donation/create").post(createDonation);
