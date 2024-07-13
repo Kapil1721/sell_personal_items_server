@@ -8,24 +8,21 @@ import AppError from "../utils/appError.js";
 
 const prisma = new PrismaClient();
 
-export const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+export const signToken = (user) => {
+  return jwt.sign({ ...user }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
 
 export const createSendToken = (user, statusCode, res) => {
-  console.log(user);
-  const token = signToken(user.id);
-  user.password = undefined;
+  const token = signToken(user);
   res.cookie("token", token, {
     httpOnly: false,
     sameSite: "none",
     maxAge: 24 * 3600000, // 1 day in milliseconds
     secure: process.env.NODE_ENV === "production", // Only set secure cookie in production
   });
-
-  res.status(statusCode).json({
+  return res.status(statusCode).json({
     status: "success",
     token,
     data: {
@@ -34,10 +31,10 @@ export const createSendToken = (user, statusCode, res) => {
   });
 };
 
-export const setCokie = CatchAsync(async (req, res, next) => {
-  if (!req.cookies.token) return res.status(200).json({ status: false });
-  res.status(200).json({status:"success"})
-});
+// export const checkSession = CatchAsync(async (req, res, next) => {
+//   if (!req.cookies.token) return res.status(200).json({ status: false });
+//   res.status(200).json({ status: "success" });
+// });
 
 export const userSignUp = CatchAsync(async (req, res, next) => {
   try {
@@ -129,6 +126,16 @@ export const userLogin = CatchAsync(async (req, res, next) => {
   // });
 
   const user = await prisma.users.findFirst({
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      contactNumber: true,
+      password: true,
+      role: true,
+      userType: true,
+      active: true,
+    },
     where: {
       OR: [{ email: usernameoremail }, { username: usernameoremail }],
     },
@@ -146,24 +153,28 @@ export const userLogin = CatchAsync(async (req, res, next) => {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
-  createSendToken(user, 200, res);
+  createSendToken({ ...user, password: undefined }, 200, res);
 });
 
-export const authenticateUser = (req, res, next) => {
+export const authMiddleware = async (req, res, next) => {
   const token = req.cookies.token;
   console.log(token);
   if (!token) {
-    return next(new AppError("Unauthorized!, Token is not found", 401));
+    return res.status(401).json({ status:'404',message:"Token not found" });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // console.log(decoded, req.user);
-    req.user = decoded; // Attach decoded user data to request object
+    req.user = decoded // Attach decoded user data to request object
     next();
   } catch (error) {
-    return next(new AppError("Unauthorized", 403));
+    if (err.name === "TokenExpiredError") {
+      res.status(401).json({ status:'expired',message:"Session is expired. Login again" });
+    } else {
+      res.status(401).json({ status:'invalid',message: "Token is not valid" });
+    }
   }
 };
 

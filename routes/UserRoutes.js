@@ -1,8 +1,7 @@
 import express from "express";
 import {
-  authenticateUser,
+  authMiddleware,
   getValidUser,
-  setCokie,
   userLogin,
   userLogout,
   userSignUp,
@@ -28,7 +27,10 @@ import {
   upadateEmail,
   deleteUser,
 } from "../controllers/User.Controllers.js";
-import { getPlans, getPlansById } from "../controllers/Membership.Controller.js";
+import {
+  getPlans,
+  getPlansById,
+} from "../controllers/Membership.Controller.js";
 import { createDonation } from "../controllers/Donation.Controller.js";
 import upload from "../utils/upload.js";
 import { PrismaClient } from "@prisma/client";
@@ -37,16 +39,43 @@ const prisma = new PrismaClient();
 const router = express.Router();
 
 router.route("/login").post(userLogin);
-router.route("/setcookie").post(setCokie);
-router.route("/getValidUser").get(authenticateUser, getValidUser);
-router.route("/profile").get(authenticateUser, getProfile);
-router.route("/profile").put(authenticateUser, updateAccountDetails);
-router.route("/profile").delete(authenticateUser, deleteUser);
-router.route("/profile/image").put(authenticateUser, updateProfileImage);
-router.route("/profile/socialmedia").put(authenticateUser, updateSocialMedia);
-router.route("/profile/password").put(authenticateUser, upadatePassword);
-router.route("/profile/email").put(authenticateUser, upadateEmail);
-router.route("/authenticate").get(authenticateUser, async (req, res, next) => {
+router.route("/check-session").get(authMiddleware, async (req, res, next) => {
+  try {
+    const user = await prisma.users.findUnique({
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        contactNumber: true,
+        password: true,
+        role: true,
+        userType: true,
+        active: true,
+      },
+      where: {
+        id: parseInt(req.user.id),
+      },
+    });
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+    res.status(200).json({
+      status: true,
+      user,
+    });
+  } catch (error) {
+    res.status(401).json({ status: "expired", message: "Session is expired" });
+  }
+});
+router.route("/getValidUser").get(authMiddleware, getValidUser);
+router.route("/profile").get(authMiddleware, getProfile);
+router.route("/profile").put(authMiddleware, updateAccountDetails);
+router.route("/profile").delete(authMiddleware, deleteUser);
+router.route("/profile/image").put(authMiddleware, updateProfileImage);
+router.route("/profile/socialmedia").put(authMiddleware, updateSocialMedia);
+router.route("/profile/password").put(authMiddleware, upadatePassword);
+router.route("/profile/email").put(authMiddleware, upadateEmail);
+router.route("/authenticate").get(authMiddleware, async (req, res, next) => {
   try {
     const user = await prisma.users.findUnique({
       where: {
@@ -66,7 +95,7 @@ router.route("/signup").post(userSignUp);
 router.route("/logout").post(userLogout);
 
 // for membership
-router.route("/membership").post(authenticateUser, addMembership);
+router.route("/membership").post(authMiddleware, addMembership);
 router.route("/plans").get(getPlans);
 router.route("/plans/:id").get(getPlansById);
 
@@ -77,27 +106,27 @@ router.route("/donation/create").post(createDonation);
 
 router
   .route("/addproduct")
-  .post(authenticateUser, postProduct)
-  .put(authenticateUser, updateProduct);
+  .post(authMiddleware, postProduct)
+  .put(authMiddleware, updateProduct);
 router.route("/uploads").post(upload.single("file"), uploads);
 router.route("/uploads/:file").get(upload.single("file"), uploads);
-router.route("/uploads/:file").delete(authenticateUser, deleteUploads);
+router.route("/uploads/:file").delete(authMiddleware, deleteUploads);
 
 // for products
 router
   .route("/moderation")
-  .get(authenticateUser, getModerationProductsforAdmin)
-  .put(authenticateUser, updateModerationProductStatus);
+  .get(authMiddleware, getModerationProductsforAdmin)
+  .put(authMiddleware, updateModerationProductStatus);
 router
   .route("/moderation/:id")
-  .get(authenticateUser, getModerationProductsforAdminByID)
-  .delete(authenticateUser, deleteMyProduct);
+  .get(authMiddleware, getModerationProductsforAdminByID)
+  .delete(authMiddleware, deleteMyProduct);
 
-router.route("/my-products").get(authenticateUser, getMyProducts);
+router.route("/my-products").get(authMiddleware, getMyProducts);
 router
   .route("/my-products/:id")
-  .get(authenticateUser, getMyProduct)
-  .delete(authenticateUser, deleteMyProduct);
-// .put(authenticateUser, updateModerationProductStatus);
+  .get(authMiddleware, getMyProduct)
+  .delete(authMiddleware, deleteMyProduct);
+// .put(authMiddleware, updateModerationProductStatus);
 
 export default router;
