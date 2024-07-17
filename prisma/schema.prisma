@@ -51,18 +51,18 @@ model Memberships {
 }
 
 model SubscriptionPlan {
-  id           Int            @id @default(autoincrement())
-  name         String
-  price        Float
-  priceRate    DurationTypes? @default(MONTH)
-  duration     Int 
-  durationType DurationTypes? @default(MONTH)
+  id             Int            @id @default(autoincrement())
+  name           String
+  price          Float
+  priceRate      DurationTypes? @default(MONTH)
+  duration       Int
+  durationType   DurationTypes? @default(MONTH)
   offerType      OfferType?
   offerValue     Float?
-  active         Boolean?      @default(true)
-  createdAt      DateTime?     @default(now())
-  updatedAt      DateTime?     @updatedAt
-  oneTimePayment Boolean?      @default(false)
+  active         Boolean?       @default(true)
+  createdAt      DateTime?      @default(now())
+  updatedAt      DateTime?      @updatedAt
+  oneTimePayment Boolean?       @default(false)
   subscriptions  Memberships[]
   features       PlanFeature[]
 }
@@ -194,12 +194,21 @@ model Donations {
 //   plans       Plan[]
 // }
 
+model ItemCategories {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  active      Boolean      @default(true)
+  items       ListedItem[]
+}
+
 model ListedItem {
   post_id    Int                @id @default(autoincrement())
   slug       String             @unique @db.VarChar(250)
   name       String             @db.VarChar(100)
   desription String?
-  category   String             @db.VarChar(100)
+  categoryId Int?               @default(1)
+  category   ItemCategories?    @relation(fields: [categoryId], references: [id])
   expires    DateTime?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt

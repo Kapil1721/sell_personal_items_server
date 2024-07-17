@@ -150,7 +150,7 @@ export const userLogin = CatchAsync(async (req, res, next) => {
   const passwordMatch = await bcrypt.compare(password, user.password);
   if (!passwordMatch) {
     res.clearCookie("token");
-    return res.status(401).json({ message: "Invalid credentials" });
+    return res.status(403).json({ message: "Invalid credentials" });
   }
 
   createSendToken({ ...user, password: undefined }, 200, res);

@@ -106,8 +106,8 @@ export const updateProduct = CatchAsync(async (req, res, next) => {
       .status(404)
       .json({ status: false, message: "Product not found" });
   }
-
-  const slug = Date.now() + name.replaceAll(" ", "-");
+  console.log(category, "category");
+  // const slug = Date.now() + name.replaceAll(" ", "-");
   const product = await prisma.listedItem.update({
     where: {
       post_id: post_id,
@@ -115,8 +115,7 @@ export const updateProduct = CatchAsync(async (req, res, next) => {
     data: {
       name,
       desription: description,
-      category,
-      slug,
+      categoryId: category.value,
       userId: req.user.id,
       updatedAt: new Date(),
     },

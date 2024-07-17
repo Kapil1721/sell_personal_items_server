@@ -34,6 +34,7 @@ import {
 import { createDonation } from "../controllers/Donation.Controller.js";
 import upload from "../utils/upload.js";
 import { PrismaClient } from "@prisma/client";
+import { getAllProducts, getProductCategories } from "../controllers/Products.Controllers.js";
 const prisma = new PrismaClient();
 
 const router = express.Router();
@@ -128,5 +129,13 @@ router
   .get(authMiddleware, getMyProduct)
   .delete(authMiddleware, deleteMyProduct);
 // .put(authMiddleware, updateModerationProductStatus);
+
+
+// for products
+
+router.route('/products').get(authMiddleware,getAllProducts)
+router.route('/product-categories').get(authMiddleware,getProductCategories)
+
+
 
 export default router;
