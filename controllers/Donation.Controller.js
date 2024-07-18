@@ -30,7 +30,7 @@ export const createDonation = async (req, res, next) => {
         pickupAddress,
         pickupDate,
         items,
-        amount,
+        amount: amount !== "" ? parseFloat(amount) : 0,
       };
     } else {
       newDonation = {
@@ -46,26 +46,48 @@ export const createDonation = async (req, res, next) => {
       };
     }
 
-    console.log(newDonation);
-
+    // console.log(newDonation);
+    const slug = Date.now() + name.replaceAll(" ", "-");
     const donation = await prisma.donations.create({
       data: {
         name: newDonation.name,
         email: newDonation.email,
         countryCode: newDonation.countryCode,
         phone: newDonation.phone,
-        items: newDonation.items,
         amount: newDonation.amount,
         createdAt: new Date(), // You can also use Prisma's automatic createdAt timestamp
         // Optional: Link to a user (if usersId is provided in your schema)
         usersId: newDonation.userId, // },
+        items: {
+          create: newDonation.items.map((item) => {
+            console.log(item.category);
+            return {
+              name: item.name,
+              // quantity: parseInt(item.quantity),
+              slug: slug,
+              // categoryId: parseInt(item.category),
+              desription: item.description,
+              user: 2,
+              images: {
+                create: {
+                  url: item.image,
+                },
+              },
+            };
+          }),
+        },
+      },
+      include: {
+        items: true,
+        Users: true,
       },
     });
-    // console.log(donation, newDonation);
+    console.log(donation);
     res.status(200).json({
       message: "Congratulation! Your donation has been done successfully.",
     });
   } catch (error) {
+    console.log(error);
     return res.status(404).json({
       error,
       message: "Something went wrong! Please try after some time.",

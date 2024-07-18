@@ -39,6 +39,25 @@ const prisma = new PrismaClient();
 
 const router = express.Router();
 
+
+router.route("/authenticate").get(authMiddleware, async (req, res, next) => {
+  try {
+    const user = await prisma.users.findUnique({
+      where: {
+        id: req.user.id,
+      },
+    });
+
+    res
+      .status(200)
+      .json({ user, message: "Access granted to protected route" });
+    console.log("Authenticated");
+  } catch (err) {
+    return next(new AppError("unauthorized", 401));
+  }
+});
+router.route("/signup").post(userSignUp);
+router.route("/logout").post(userLogout);
 router.route("/login").post(userLogin);
 router.route("/check-session").get(authMiddleware, async (req, res, next) => {
   try {
@@ -76,24 +95,7 @@ router.route("/profile/image").put(authMiddleware, updateProfileImage);
 router.route("/profile/socialmedia").put(authMiddleware, updateSocialMedia);
 router.route("/profile/password").put(authMiddleware, upadatePassword);
 router.route("/profile/email").put(authMiddleware, upadateEmail);
-router.route("/authenticate").get(authMiddleware, async (req, res, next) => {
-  try {
-    const user = await prisma.users.findUnique({
-      where: {
-        id: req.user.id,
-      },
-    });
 
-    res
-      .status(200)
-      .json({ user, message: "Access granted to protected route" });
-    console.log("Authenticated");
-  } catch (err) {
-    return next(new AppError("unauthorized", 401));
-  }
-});
-router.route("/signup").post(userSignUp);
-router.route("/logout").post(userLogout);
 
 // for membership
 router.route("/membership").post(authMiddleware, addMembership);
