@@ -14,7 +14,7 @@ export const getProductCategories = CatchAsync(async (req, res) => {
 });
 
 export const getAllProducts = CatchAsync(async (req, res) => {
-  const { id } = req.user;
+  // const { id } = req.user;
   const { page, limit, sort, type, category } = req.query;
   console.log(type);
   const order = sort ? (sort === "Oldest" ? "asc" : "desc") : "desc";
