@@ -13,6 +13,7 @@ export const createDonation = async (req, res, next) => {
       amount,
       countryCode,
     } = req.body;
+
     const existingUser = await prisma.users.findFirst({
       where: {
         email: email,
@@ -46,7 +47,7 @@ export const createDonation = async (req, res, next) => {
       };
     }
 
-    // console.log(newDonation);
+    console.log(newDonation, "hjgdhsjfkhjkghd");
     const slug = Date.now() + name.replaceAll(" ", "-");
     const donation = await prisma.donations.create({
       data: {
@@ -63,27 +64,33 @@ export const createDonation = async (req, res, next) => {
             console.log(item.category);
             return {
               name: item.name,
-              // quantity: parseInt(item.quantity),
+              userId: newDonation.userId,
+              itemsType: "FOR_DONATION",
+              quantity: parseInt(item.quantity),
               slug: slug,
-              // categoryId: parseInt(item.category),
+              categoryId: parseInt(item.category),
               desription: item.description,
-              user: 2,
               images: {
-                create: {
-                  url: item.image,
-                },
+                create: item.image.map((img, i) => ({
+                  fileName: img.fileName,
+                  image: img.url,
+                })),
               },
             };
           }),
         },
       },
       include: {
-        items: true,
-        Users: true,
+        items: {
+          include: {
+            images: true,
+          },
+        },
       },
     });
     console.log(donation);
     res.status(200).json({
+      donation,
       message: "Congratulation! Your donation has been done successfully.",
     });
   } catch (error) {

@@ -69,24 +69,33 @@ export const postProduct = CatchAsync(async (req, res, next) => {
       category,
       slug,
       userId: req.user.id,
+      images: {
+        create: [...images, ..._attachments].map((itm) => ({
+          imagesType: itm.type,
+          image: itm.url,
+        })),
+      },
     },
+    include:{
+      images:true
+    }
   });
 
-  if (product) {
-    const newImages = [...images, ..._attachments].map((itm) => ({
-      imagesType: itm.type,
-      image: itm.url,
-      listedItem_id: product.post_id,
-    }));
+  // if (product) {
+  //   const newImages = [...images, ..._attachments].map((itm) => ({
+  //     imagesType: itm.type,
+  //     image: itm.url,
+  //     listedItem_id: product.post_id,
+  //   }));
 
-    const productImages = await prisma.images.createMany({
-      data: [...newImages],
-    });
-    console.log(product, productImages);
-    res
-      .status(200)
-      .json({ status: true, message: "Product is listed successfully." });
-  }
+  //   const productImages = await prisma.images.createMany({
+  //     data: [...newImages],
+  //   });
+  console.log(product);
+  res
+    .status(200)
+    .json({ status: true, message: "Product is listed successfully." });
+  // }
   // } catch (error) {}
 });
 
@@ -115,7 +124,7 @@ export const updateProduct = CatchAsync(async (req, res, next) => {
     data: {
       name,
       desription: description,
-      categoryId: category.value,
+      categoryId: category.id,
       userId: req.user.id,
       updatedAt: new Date(),
     },

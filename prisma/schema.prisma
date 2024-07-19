@@ -9,30 +9,29 @@ datasource db {
 }
 
 model Users {
-  id                 Int            @id @default(autoincrement())
-  username           String         @unique @db.VarChar(30)
-  email              String         @unique @db.VarChar(50)
-  name               String         @db.VarChar(50)
-  countryCode        String         @db.VarChar(10)
-  address            String?        @db.VarChar(500)
+  id                 Int           @id @default(autoincrement())
+  username           String        @unique @db.VarChar(30)
+  email              String        @unique @db.VarChar(50)
+  name               String        @db.VarChar(50)
+  countryCode        String        @db.VarChar(10)
+  address            String?       @db.VarChar(500)
   profileImage       String?
   profileDescription String?
-  contactNumber      String         @db.VarChar(50)
-  whatsApp           Boolean?       @default(false)
-  viber              Boolean?       @default(true)
-  password           String         @db.VarChar(250)
-  verification       String?        @db.VarChar(255)
-  verified           Boolean?       @default(false)
-  active             Boolean?       @default(true)
-  userType           UserType?      @default(Recipient)
-  role               Role           @default(USER)
-  createdAt          DateTime?      @default(now())
-  updatedAt          DateTime?      @updatedAt
+  contactNumber      String        @db.VarChar(50)
+  whatsApp           Boolean?      @default(false)
+  viber              Boolean?      @default(true)
+  password           String        @db.VarChar(250)
+  verification       String?       @db.VarChar(255)
+  verified           Boolean?      @default(false)
+  active             Boolean?      @default(true)
+  userType           UserType?     @default(Recipient)
+  role               Role          @default(USER)
+  createdAt          DateTime?     @default(now())
+  updatedAt          DateTime?     @updatedAt
   membership         Memberships?
   listedItem         ListedItem[]
   donations          Donations[]
   socailLinks        SocialLinks[]
-  DonatedItems       DonatedItems[]
 }
 
 model Memberships {
@@ -144,49 +143,48 @@ model SocialLinks {
 // }
 
 model Donations {
-  id          Int            @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   usersId     Int?
   name        String
   email       String
   countryCode String
   phone       String
-  items       DonatedItems[]
-  amount      Decimal?       @db.Decimal(10, 2)
-  createdAt   DateTime?      @default(now())
-  updatedAt   DateTime?      @updatedAt
-  Users       Users?         @relation(fields: [usersId], references: [id])
+  items       ListedItem[]
+  amount      Decimal?     @db.Decimal(10, 2)
+  createdAt   DateTime?    @default(now())
+  updatedAt   DateTime?    @updatedAt
+  Users       Users?       @relation(fields: [usersId], references: [id])
 }
 
-model DonatedItems {
-  post_id     Int                  @id @default(autoincrement())
-  slug        String               @unique @db.VarChar(250)
-  name        String               @db.VarChar(100)
-  desription  String?
-  categoryId  Int?                 @default(1)
-  category    ItemCategories?      @relation(fields: [categoryId], references: [id])
-  expires     DateTime?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  active      Boolean              @default(true)
-  isApproved  Boolean              @default(false)
-  status      ListedItem_Status?   @default(Draft)
-  userId      Int
-  comments    Comment[]
-  images      DonationItemImages[]
-  likes       Likes[]
-  reviews     Reviews[]
-  user        Users                @relation(fields: [userId], references: [id])
-  views       Views[]
-  Donations   Donations?           @relation(fields: [donationsId], references: [id])
-  donationsId Int?
-}
+// model DonatedItems {
+//   post_id     Int                  @id @default(autoincrement())
+//   slug        String               @unique @db.VarChar(250)
+//   name        String               @db.VarChar(100)
+//   desription  String?
+//   categoryId  Int?                 @default(1)
+//   category    ItemCategories?      @relation(fields: [categoryId], references: [id])
+//   expires     DateTime?
+//   createdAt   DateTime             @default(now())
+//   updatedAt   DateTime             @updatedAt
+//   active      Boolean              @default(true)
+//   isApproved  Boolean              @default(false)
+//   status      ListedItem_Status?   @default(Draft)
+//   comments    Comment[]
+//   images      DonationItemImages[]
+//   likes       Likes[]
+//   reviews     Reviews[]
+//   views       Views[]
+//   Donations   Donations?           @relation(fields: [donationsId], references: [id])
+//   donationsId Int?
+// }
 
-model DonationItemImages {
-  id           Int           @id @default(autoincrement())
-  url          String
-  donationId   Int
-  DonatedItems DonatedItems? @relation(fields: [donationId], references: [post_id])
-}
+// model DonationItemImages {
+//   id           Int           @id @default(autoincrement())
+//   fileName     String
+//   url          String
+//   donationId   Int
+//   DonatedItems DonatedItems? @relation(fields: [donationId], references: [post_id])
+// }
 
 // model Memberships {
 //   id            Int       @id @default(autoincrement())
@@ -233,7 +231,7 @@ model ItemCategories {
   active             Boolean              @default(true)
   items              ListedItem[]
   CategoryAttributes CategoryAttributes[]
-  DonatedItems       DonatedItems[]
+  // DonatedItems       DonatedItems[]
 }
 
 model CategoryAttributes {
@@ -246,25 +244,29 @@ model CategoryAttributes {
 }
 
 model ListedItem {
-  post_id    Int                @id @default(autoincrement())
-  slug       String             @unique @db.VarChar(250)
-  name       String             @db.VarChar(100)
-  desription String?
-  categoryId Int?               @default(1)
-  category   ItemCategories?    @relation(fields: [categoryId], references: [id])
-  expires    DateTime?
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
-  active     Boolean            @default(true)
-  isApproved Boolean            @default(false)
-  status     ListedItem_Status? @default(Draft)
-  userId     Int
-  comments   Comment[]
-  images     Images[]
-  likes      Likes[]
-  reviews    Reviews[]
-  user       Users              @relation(fields: [userId], references: [id])
-  views      Views[]
+  post_id     Int                @id @default(autoincrement())
+  slug        String             @unique @db.VarChar(250)
+  name        String             @db.VarChar(100)
+  desription  String?
+  categoryId  Int?               @default(1)
+  category    ItemCategories?    @relation(fields: [categoryId], references: [id])
+  expires     DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  active      Boolean            @default(true)
+  isApproved  Boolean            @default(false)
+  status      ListedItem_Status? @default(Draft)
+  userId      Int?
+  comments    Comment[]
+  images      Images[]
+  likes       Likes[]
+  reviews     Reviews[]
+  user        Users?              @relation(fields: [userId], references: [id])
+  views       Views[]
+  itemsType   ItemTypes?         @default(SALE)
+  Donations   Donations?         @relation(fields: [donationsId], references: [id])
+  donationsId Int?
+  quantity    Int?               @default(10)
 }
 
 model Reviews {
@@ -276,7 +278,7 @@ model Reviews {
   updatedAt           DateTime        @updatedAt
   ListedItem          ListedItem?     @relation(fields: [listedItemPost_id], references: [post_id])
   listedItemPost_id   Int?
-  DonatedItems        DonatedItems?   @relation(fields: [donatedItemsPost_id], references: [post_id])
+  // DonatedItems        DonatedItems?   @relation(fields: [donatedItemsPost_id], references: [post_id])
   donatedItemsPost_id Int?
 }
 
@@ -290,40 +292,38 @@ model ReviewsImages {
 }
 
 model Views {
-  id                  Int           @id @default(autoincrement())
+  id                  Int        @id @default(autoincrement())
   userId              Int
   postId              Int
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  listedItem          ListedItem    @relation(fields: [postId], references: [post_id])
-  DonatedItems        DonatedItems? @relation(fields: [donatedItemsPost_id], references: [post_id])
-  donatedItemsPost_id Int?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  listedItem          ListedItem @relation(fields: [postId], references: [post_id])
+  
 }
 
 model Likes {
-  id                  Int           @id @default(autoincrement())
+  id                  Int         @id @default(autoincrement())
   user_id             Int
   post_id             Int
-  createdAt           DateTime      @default(now())
-  modifiedAt          DateTime      @updatedAt
+  createdAt           DateTime    @default(now())
+  modifiedAt          DateTime    @updatedAt
   listedItemPost_id   Int?
-  ListedItem          ListedItem?   @relation(fields: [listedItemPost_id], references: [post_id])
-  DonatedItems        DonatedItems? @relation(fields: [donatedItemsPost_id], references: [post_id])
-  donatedItemsPost_id Int?
+  ListedItem          ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
+ 
 }
 
 model Comment {
-  id                  Int           @id @default(autoincrement())
+  id                  Int         @id @default(autoincrement())
   content             String
   listedItemPost_id   Int?
-  ListedItem          ListedItem?   @relation(fields: [listedItemPost_id], references: [post_id])
-  DonatedItems        DonatedItems? @relation(fields: [donatedItemsPost_id], references: [post_id])
-  donatedItemsPost_id Int?
+  ListedItem          ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
+
 }
 
 model Images {
   id            Int         @id @default(autoincrement())
   imagesType    ImageTypes? @default(GALLARY)
+  fileName      String      @default("")
   image         String
   listedItem_id Int?
   ListedItem    ListedItem? @relation(fields: [listedItem_id], references: [post_id])
@@ -348,4 +348,9 @@ enum ListedItem_Status {
 enum ImageTypes {
   GALLARY
   ATTACHMENTS
+}
+
+enum ItemTypes {
+  DONATION
+  SALE
 }
