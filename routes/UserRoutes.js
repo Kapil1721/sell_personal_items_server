@@ -135,7 +135,7 @@ router
 
 // for products
 
-router.route('/products').get(authMiddleware,getAllProducts)
+router.route('/products').get(getAllProducts)
 router.route('/product-categories').get(getProductCategories)
 
 
