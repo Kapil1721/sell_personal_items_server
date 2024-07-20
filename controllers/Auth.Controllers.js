@@ -47,6 +47,9 @@ export const userSignUp = CatchAsync(async (req, res, next) => {
       countryCode,
       contactNumber,
       userType,
+      seller,
+      buyer,
+      donor,
     } = req.body;
 
     if (!password) {
@@ -76,6 +79,9 @@ export const userSignUp = CatchAsync(async (req, res, next) => {
       contactNumber,
       userType,
       verification: verificationToken,
+      seller,
+      buyer,
+      donor,
     };
 
     const user = await prisma.users.create({ data: newUser });
@@ -174,12 +180,10 @@ export const authMiddleware = async (req, res, next) => {
     next();
   } catch (error) {
     if (err.name === "TokenExpiredError") {
-      res
-        .status(401)
-        .json({
-          status: "expired",
-          message: "Session is expired. Login again",
-        });
+      res.status(401).json({
+        status: "expired",
+        message: "Session is expired. Login again",
+      });
     } else {
       res
         .status(401)
