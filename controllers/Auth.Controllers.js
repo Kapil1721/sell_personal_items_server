@@ -135,6 +135,9 @@ export const userLogin = CatchAsync(async (req, res, next) => {
       role: true,
       userType: true,
       active: true,
+      buyer: true,
+      seller: true,
+      donor: true,
     },
     where: {
       OR: [{ email: usernameoremail }, { username: usernameoremail }],
@@ -160,20 +163,27 @@ export const authMiddleware = async (req, res, next) => {
   const token = req.cookies.token;
   // console.log(token);
   if (!token) {
-    return res.status(403).json({ status:'404',message:"Token not found" });
+    return res.status(403).json({ status: "404", message: "Token not found" });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // console.log(decoded, req.user);
-    req.user = decoded // Attach decoded user data to request object
+    req.user = decoded; // Attach decoded user data to request object
     next();
   } catch (error) {
     if (err.name === "TokenExpiredError") {
-      res.status(401).json({ status:'expired',message:"Session is expired. Login again" });
+      res
+        .status(401)
+        .json({
+          status: "expired",
+          message: "Session is expired. Login again",
+        });
     } else {
-      res.status(401).json({ status:'invalid',message: "Token is not valid" });
+      res
+        .status(401)
+        .json({ status: "invalid", message: "Token is not valid" });
     }
   }
 };

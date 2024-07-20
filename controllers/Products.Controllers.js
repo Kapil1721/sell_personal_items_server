@@ -60,6 +60,7 @@ export const getAllProducts = CatchAsync(async (req, res) => {
       comments: true,
       views: true,
       likes: true,
+      category: true,
     },
     orderBy: {
       createdAt: order,
@@ -71,4 +72,45 @@ export const getAllProducts = CatchAsync(async (req, res) => {
     products,
   });
 });
-export const getSingleProduct = CatchAsync(async (req, res) => {});
+export const getSingleProduct = CatchAsync(async (req, res) => {
+  const { slug } = req.params;
+
+  const product = await prisma.listedItem.findUnique({
+    where: {
+      slug,
+    },
+    include: {
+      images: true,
+      comments: true,
+      views: true,
+      likes: true,
+      category: true,
+      user: {
+        select: {
+          name: true,
+          username: true,
+          userType: true,
+          countryCode: true,
+          contactNumber: true,
+        },
+      },
+    },
+  });
+
+  if (product) {
+    await prisma.views.create({
+      data: {
+        postId: product.post_id,
+        userId: product.userId,
+      },
+    });
+  }
+
+  res.status(200).json({
+    status: true,
+    product: {
+      ...product,
+      images: product.images.map((item) => ({ ...item, url: item.image })),
+    },
+  });
+});

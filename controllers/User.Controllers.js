@@ -76,9 +76,9 @@ export const postProduct = CatchAsync(async (req, res, next) => {
         })),
       },
     },
-    include:{
-      images:true
-    }
+    include: {
+      images: true,
+    },
   });
 
   // if (product) {
@@ -163,6 +163,7 @@ export const getModerationProductsforAdmin = CatchAsync(
       },
       include: {
         images: true,
+        category: true,
         user: {
           select: {
             name: true,
@@ -335,6 +336,7 @@ export const getMyProducts = CatchAsync(async (req, res, next) => {
       comments: true,
       views: true,
       likes: true,
+      category: true,
     },
     orderBy: {
       createdAt: order,
@@ -357,6 +359,7 @@ export const getMyProduct = CatchAsync(async (req, res, next) => {
     include: {
       images: true,
       comments: true,
+      category: true,
       views: true,
       likes: true,
       user: {
@@ -670,6 +673,9 @@ export const updateAccountDetails = CatchAsync(async (req, res, next) => {
     viber,
     profileDescription,
     address,
+    buyer,
+    seller,
+    donor,
   } = req.body;
   const user = await prisma.users.findUnique({
     where: {
@@ -696,6 +702,22 @@ export const updateAccountDetails = CatchAsync(async (req, res, next) => {
       profileDescription,
       address,
       updatedAt: new Date(),
+      buyer,
+      seller,
+      donor,
+    },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      contactNumber: true,
+      password: true,
+      role: true,
+      userType: true,
+      active: true,
+      buyer: true,
+      seller: true,
+      donor: true,
     },
   });
 

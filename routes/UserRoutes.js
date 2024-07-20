@@ -34,11 +34,14 @@ import {
 import { createDonation } from "../controllers/Donation.Controller.js";
 import upload from "../utils/upload.js";
 import { PrismaClient } from "@prisma/client";
-import { getAllProducts, getProductCategories } from "../controllers/Products.Controllers.js";
+import {
+  getAllProducts,
+  getProductCategories,
+  getSingleProduct,
+} from "../controllers/Products.Controllers.js";
 const prisma = new PrismaClient();
 
 const router = express.Router();
-
 
 router.route("/authenticate").get(authMiddleware, async (req, res, next) => {
   try {
@@ -71,6 +74,9 @@ router.route("/check-session").get(authMiddleware, async (req, res, next) => {
         role: true,
         userType: true,
         active: true,
+        buyer: true,
+        seller: true,
+        donor: true,
       },
       where: {
         id: parseInt(req.user.id),
@@ -95,7 +101,6 @@ router.route("/profile/image").put(authMiddleware, updateProfileImage);
 router.route("/profile/socialmedia").put(authMiddleware, updateSocialMedia);
 router.route("/profile/password").put(authMiddleware, upadatePassword);
 router.route("/profile/email").put(authMiddleware, upadateEmail);
-
 
 // for membership
 router.route("/membership").post(authMiddleware, addMembership);
@@ -132,12 +137,10 @@ router
   .delete(authMiddleware, deleteMyProduct);
 // .put(authMiddleware, updateModerationProductStatus);
 
-
 // for products
 
-router.route('/products').get(getAllProducts)
-router.route('/product-categories').get(getProductCategories)
-
-
+router.route("/products").get(getAllProducts);
+router.route("/products/:slug").get(getSingleProduct);
+router.route("/product-categories").get(getProductCategories);
 
 export default router;

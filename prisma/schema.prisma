@@ -28,6 +28,9 @@ model Users {
   role               Role          @default(USER)
   createdAt          DateTime?     @default(now())
   updatedAt          DateTime?     @updatedAt
+  buyer              Boolean?      @default(true)
+  seller             Boolean?      @default(false)
+  donor              Boolean?      @default(false)
   membership         Memberships?
   listedItem         ListedItem[]
   donations          Donations[]
@@ -261,7 +264,7 @@ model ListedItem {
   images      Images[]
   likes       Likes[]
   reviews     Reviews[]
-  user        Users?              @relation(fields: [userId], references: [id])
+  user        Users?             @relation(fields: [userId], references: [id])
   views       Views[]
   itemsType   ItemTypes?         @default(SALE)
   Donations   Donations?         @relation(fields: [donationsId], references: [id])
@@ -292,32 +295,29 @@ model ReviewsImages {
 }
 
 model Views {
-  id                  Int        @id @default(autoincrement())
-  userId              Int
-  postId              Int
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
-  listedItem          ListedItem @relation(fields: [postId], references: [post_id])
-  
+  id         Int        @id @default(autoincrement())
+  userId     Int
+  postId     Int
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  listedItem ListedItem @relation(fields: [postId], references: [post_id])
 }
 
 model Likes {
-  id                  Int         @id @default(autoincrement())
-  user_id             Int
-  post_id             Int
-  createdAt           DateTime    @default(now())
-  modifiedAt          DateTime    @updatedAt
-  listedItemPost_id   Int?
-  ListedItem          ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
- 
+  id                Int         @id @default(autoincrement())
+  user_id           Int
+  post_id           Int
+  createdAt         DateTime    @default(now())
+  modifiedAt        DateTime    @updatedAt
+  listedItemPost_id Int?
+  ListedItem        ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
 }
 
 model Comment {
-  id                  Int         @id @default(autoincrement())
-  content             String
-  listedItemPost_id   Int?
-  ListedItem          ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
-
+  id                Int         @id @default(autoincrement())
+  content           String
+  listedItemPost_id Int?
+  ListedItem        ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
 }
 
 model Images {
