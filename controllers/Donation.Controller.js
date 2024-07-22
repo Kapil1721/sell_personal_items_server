@@ -65,7 +65,7 @@ export const createDonation = async (req, res, next) => {
             return {
               name: item.name,
               userId: newDonation.userId,
-              itemsType: "FOR_DONATION",
+              itemsType: "DONATION",
               quantity: parseInt(item.quantity),
               slug: slug,
               categoryId: parseInt(item.category),
