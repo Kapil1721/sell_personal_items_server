@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  AdminLogin,
   authMiddleware,
   getValidUser,
   userLogin,
@@ -62,6 +63,7 @@ router.route("/authenticate").get(authMiddleware, async (req, res, next) => {
 router.route("/signup").post(userSignUp);
 router.route("/logout").post(userLogout);
 router.route("/login").post(userLogin);
+router.route("/admin/login").post(AdminLogin);
 router.route("/check-session").get(authMiddleware, async (req, res, next) => {
   try {
     // const _user = req.user.delete("iat")

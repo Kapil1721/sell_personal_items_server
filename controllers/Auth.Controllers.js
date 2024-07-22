@@ -148,17 +148,21 @@ export const userLogin = CatchAsync(async (req, res, next) => {
       role: true,
       userType: true,
       active: true,
-      ...checkAccountPermission
+      ...checkAccountPermission,
     },
     where: {
       OR: [{ email: usernameoremail }, { username: usernameoremail }],
-      ...checkAccountPermission
+      ...checkAccountPermission,
     },
   });
 
   console.log(user, checkAccountPermission);
   // If user not found, return error
   if (!user) {
+    res.clearCookie("token");
+    return res.status(403).json({ message: "Invalid credentials" });
+  }
+  if (user.role === "ADMIN") {
     res.clearCookie("token");
     return res.status(403).json({ message: "Invalid credentials" });
   }
@@ -273,4 +277,50 @@ export const userLogout = CatchAsync(async (req, res, next) => {
     status: 200,
     message: "Logged out successfully",
   });
+});
+
+export const AdminLogin = CatchAsync(async (req, res, next) => {
+  const { usernameoremail, password, role } = req.body;
+
+  if (!usernameoremail || !password) {
+    return next(
+      new AppError("Please provide username/email and password", 400)
+    );
+  }
+
+  const user = await prisma.users.findFirst({
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      contactNumber: true,
+      password: true,
+      role: true,
+      userType: true,
+      active: true,
+      seller: true,
+      donor: true,
+      buyer: true,
+    },
+    where: {
+      OR: [{ email: usernameoremail }, { username: usernameoremail }],
+      role,
+    },
+  });
+
+  console.log(user, role);
+  // If user not found, return error
+  if (!user) {
+    res.clearCookie("token");
+    return res.status(403).json({ message: "Invalid credentials" });
+  }
+
+  // Check if password is correct
+  const passwordMatch = await bcrypt.compare(password, user.password);
+  if (!passwordMatch) {
+    res.clearCookie("token");
+    return res.status(403).json({ message: "Invalid credentials" });
+  }
+
+  createSendToken({ ...user, password: undefined }, 200, res);
 });
