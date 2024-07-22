@@ -64,20 +64,9 @@ router.route("/logout").post(userLogout);
 router.route("/login").post(userLogin);
 router.route("/check-session").get(authMiddleware, async (req, res, next) => {
   try {
+    // const _user = req.user.delete("iat")
+    // console.log(req.user,_user);
     const user = await prisma.users.findUnique({
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        contactNumber: true,
-        password: true,
-        role: true,
-        userType: true,
-        active: true,
-        buyer: true,
-        seller: true,
-        donor: true,
-      },
       where: {
         id: parseInt(req.user.id),
       },
@@ -87,7 +76,7 @@ router.route("/check-session").get(authMiddleware, async (req, res, next) => {
     }
     res.status(200).json({
       status: true,
-      user,
+      user: req.user,
     });
   } catch (error) {
     res.status(401).json({ status: "expired", message: "Session is expired" });

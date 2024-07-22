@@ -115,7 +115,14 @@ export const userSignUp = CatchAsync(async (req, res, next) => {
 });
 
 export const userLogin = CatchAsync(async (req, res, next) => {
-  const { usernameoremail, password } = req.body;
+  const { usernameoremail, password, accountType } = req.body;
+
+  const checkAccountPermission =
+    accountType === "DONOR"
+      ? { donor: true, buyer: true }
+      : accountType === "SELLER"
+      ? { seller: true, buyer: true }
+      : { buyer: true };
 
   if (!usernameoremail || !password) {
     return next(
@@ -141,18 +148,19 @@ export const userLogin = CatchAsync(async (req, res, next) => {
       role: true,
       userType: true,
       active: true,
-      buyer: true,
-      seller: true,
-      donor: true,
+      ...checkAccountPermission
     },
     where: {
       OR: [{ email: usernameoremail }, { username: usernameoremail }],
+      ...checkAccountPermission
     },
   });
 
+  console.log(user, checkAccountPermission);
   // If user not found, return error
   if (!user) {
-    return res.status(404).json({ message: "User not found" });
+    res.clearCookie("token");
+    return res.status(403).json({ message: "Invalid credentials" });
   }
 
   // Check if password is correct
