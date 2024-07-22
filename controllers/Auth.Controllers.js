@@ -65,15 +65,17 @@ export const userSignUp = CatchAsync(async (req, res, next) => {
       },
     });
 
+    console.log(findUser, "hfggfg");
+
     if (findUser) {
-      return next(new AppError("User already exists"));
+      return res.status(403).json({ message: "user already exists!" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
     const newUser = {
-      username,
+      username: username.toLowerCase(),
       name,
-      email,
+      email: email.toLowerCase(),
       password: hashedPassword,
       countryCode,
       contactNumber,
@@ -107,6 +109,7 @@ export const userSignUp = CatchAsync(async (req, res, next) => {
     // });
     // createSendToken({ userId: user.id, email: user.email }, 201, res);
   } catch (error) {
+    console.log(error);
     return next(
       new AppError("There was an error sending the email. Try again later!"),
       500
