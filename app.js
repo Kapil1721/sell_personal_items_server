@@ -89,6 +89,9 @@ app.use("/tmp", express.static(tempraryImageDirectory));
 
 // routes
 
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "I'am fine" });
+});
 app.get("/api/v1", (req, res) => {
   res.status(200).json({ message: "I'am fine" });
 });
