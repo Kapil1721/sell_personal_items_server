@@ -239,14 +239,14 @@ export const deleteModerateProducts = CatchAsync(async (req, res, next) => {
       message: "Product not found",
     });
   }
-  products.images.forEach((image) => {
-    const file = image.image;
-    const imagePath = path.join(__dirname, "uploads", file);
-    if (fs.existsSync(imagePath)) {
-      // Delete the file
-      fs.unlinkSync(imagePath);
-    }
-  });
+  // products.images.forEach((image) => {
+  //   const file = image.image;
+  //   const imagePath = path.join(__dirname, "uploads", file);
+  //   if (fs.existsSync(imagePath)) {
+  //     // Delete the file
+  //     fs.unlinkSync(imagePath);
+  //   }
+  // });
 
   res.status(200).json({
     status: true,
@@ -267,9 +267,15 @@ export const updateModerationProductStatus = CatchAsync(
           status: "Active",
           isApproved: true,
         },
+        include: {
+          images: true,
+          category: true,
+          user: true,
+        },
       });
       res.status(200).json({
         status: true,
+        product,
         message: `Product is approved successfully.`,
       });
     }
@@ -282,9 +288,15 @@ export const updateModerationProductStatus = CatchAsync(
         data: {
           status: status,
         },
+        include: {
+          images: true,
+          category: true,
+          user: true,
+        },
       });
       res.status(200).json({
         status: true,
+        product,
         message: `Product is declined successfully.`,
       });
     }
@@ -296,9 +308,15 @@ export const updateModerationProductStatus = CatchAsync(
         data: {
           status: "Draft",
         },
+        include: {
+          images: true,
+          category: true,
+          user: true,
+        },
       });
       res.status(200).json({
         status: true,
+        product,
         message: `Product is ${
           status === "Draft" ? "moved to draft" : "Approved"
         } successfully.`,
@@ -312,9 +330,15 @@ export const updateModerationProductStatus = CatchAsync(
         data: {
           status: "Active",
         },
+        include: {
+          images: true,
+          category: true,
+          user: true,
+        },
       });
       res.status(200).json({
         status: true,
+        product,
         message: `Product is published successfully.`,
       });
     }
