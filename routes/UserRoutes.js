@@ -40,6 +40,7 @@ import {
   getAllProducts,
   getProductCategories,
   getSingleProduct,
+  postLike,
 } from "../controllers/Products.Controllers.js";
 const prisma = new PrismaClient();
 
@@ -132,6 +133,7 @@ router
 // for products
 
 router.route("/products").get(getAllProducts);
+router.route("/like").post(authMiddleware, postLike);
 router.route("/products/:slug").get(getSingleProduct);
 router.route("/product-categories").get(getProductCategories);
 

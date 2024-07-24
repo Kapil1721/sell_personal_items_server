@@ -307,6 +307,7 @@ model Likes {
   id                Int         @id @default(autoincrement())
   user_id           Int
   post_id           Int
+  like              Boolean     @default(false)
   createdAt         DateTime    @default(now())
   modifiedAt        DateTime    @updatedAt
   listedItemPost_id Int?

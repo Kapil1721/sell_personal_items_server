@@ -72,6 +72,7 @@ export const getAllProducts = CatchAsync(async (req, res) => {
     products,
   });
 });
+
 export const getSingleProduct = CatchAsync(async (req, res) => {
   const { slug } = req.params;
 
@@ -114,5 +115,51 @@ export const getSingleProduct = CatchAsync(async (req, res) => {
       ...product,
       images: product.images.map((item) => ({ ...item, url: item.image })),
     },
+  });
+});
+export const postLike = CatchAsync(async (req, res) => {
+  const { id, like } = req.body;
+
+  const existingLike = await prisma.likes.findFirst({
+    where: {
+      post_id: parseInt(id),
+    },
+  });
+
+  console.log(existingLike);
+  if (existingLike) {
+    const updatedLike = await prisma.likes.update({
+      where: { id: existingLike.id },
+      data: { like },
+      select: {
+        like: true,
+      },
+    });
+    return res.status(200).json({ status: true, data: updatedLike });
+  } else {
+    const newLike = await prisma.likes.create({
+      data: {
+        post_id: parseInt(id),
+        user_id: parseInt(req.user.id),
+        like,
+      },
+      select: {
+        like: true,
+      },
+    });
+    return res.status(200).json({ status: true, data: newLike });
+  }
+
+  // if (product) {
+  //   await prisma.views.create({
+  //     data: {
+  //       postId: product.post_id,
+  //       userId: product.userId,
+  //     },
+  //   });
+  // }
+
+  res.status(200).json({
+    status: true,
   });
 });
