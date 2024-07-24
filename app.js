@@ -7,9 +7,10 @@ import bodyParser from "body-parser";
 import path from "path";
 import globalErrorHandlers from "./controllers/Error.Controllers.js";
 import userRoutes from "./routes/UserRoutes.js";
+import newsletterRoutes from "./routes/NewsletterRoutes.js";
 import AppError from "./utils/appError.js";
 import multer from "multer";
-import { sql } from '@vercel/postgres';
+import { sql } from "@vercel/postgres";
 
 const app = express();
 
@@ -79,11 +80,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-let tempraryImageDirectory
-if (process.env.DEV && process.env.DEV === 'Yes') {
+let tempraryImageDirectory;
+if (process.env.DEV && process.env.DEV === "Yes") {
   tempraryImageDirectory = path.join(__dirname, `/tmp`);
 } else {
-  tempraryImageDirectory = '/tmp';
+  tempraryImageDirectory = "/tmp";
 }
 app.use("/tmp", express.static(tempraryImageDirectory));
 
@@ -96,6 +97,7 @@ app.get("/api/v1", (req, res) => {
   res.status(200).json({ message: "I'am fine" });
 });
 
+app.use("/api/v1/newsletter", newsletterRoutes);
 app.use("/api/v1", userRoutes);
 
 // Handle undefined routes
@@ -106,15 +108,10 @@ app.all("*", (req, res, next) => {
 // global error handling
 app.use(globalErrorHandlers);
 
-
- 
-
-
 // Start the server
 const server = app.listen(port, () => {
   console.log(`App running on port ${port}...\nurl: http://localhost:${port}`);
 });
-
 
 // Handle unhandled rejections
 process.on("unhandledRejection", (err) => {

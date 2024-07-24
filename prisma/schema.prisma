@@ -354,3 +354,10 @@ enum ItemTypes {
   DONATION
   SALE
 }
+
+model newsletter {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  subscribed    Boolean   @default(false)
+  subscribed_at DateTime? @default(now())
+}

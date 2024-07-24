@@ -111,7 +111,7 @@ export const userSignUp = CatchAsync(async (req, res, next) => {
   } catch (error) {
     console.log(error);
     return next(
-      new AppError("There was an error sending the email. Try again later!"),
+      new AppError("Something went wrong. Try again later!"),
       500
     );
   }
