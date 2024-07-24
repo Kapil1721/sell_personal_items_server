@@ -97,6 +97,8 @@ export const getSingleProduct = CatchAsync(async (req, res) => {
     },
   });
 
+  console.log(product);
+
   if (product) {
     await prisma.views.create({
       data: {

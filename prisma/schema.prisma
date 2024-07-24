@@ -267,7 +267,7 @@ model ListedItem {
   user        Users?             @relation(fields: [userId], references: [id])
   views       Views[]
   itemsType   ItemTypes?         @default(SALE)
-  Donations   Donations?         @relation(fields: [donationsId], references: [id])
+  Donations   Donations?         @relation(fields: [donationsId], references: [id], onDelete: Cascade)
   donationsId Int?
   quantity    Int?               @default(10)
 }
@@ -279,7 +279,7 @@ model Reviews {
   reviewImages        ReviewsImages[]
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
-  ListedItem          ListedItem?     @relation(fields: [listedItemPost_id], references: [post_id])
+  ListedItem          ListedItem?     @relation(fields: [listedItemPost_id], references: [post_id], onDelete: Cascade)
   listedItemPost_id   Int?
   // DonatedItems        DonatedItems?   @relation(fields: [donatedItemsPost_id], references: [post_id])
   donatedItemsPost_id Int?
@@ -290,7 +290,7 @@ model ReviewsImages {
   image     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Reviews   Reviews? @relation(fields: [reviewsId], references: [id])
+  Reviews   Reviews? @relation(fields: [reviewsId], references: [id], onDelete: Cascade)
   reviewsId Int?
 }
 
@@ -300,7 +300,7 @@ model Views {
   postId     Int
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
-  listedItem ListedItem @relation(fields: [postId], references: [post_id])
+  listedItem ListedItem @relation(fields: [postId], references: [post_id], onDelete: Cascade)
 }
 
 model Likes {
@@ -310,14 +310,14 @@ model Likes {
   createdAt         DateTime    @default(now())
   modifiedAt        DateTime    @updatedAt
   listedItemPost_id Int?
-  ListedItem        ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
+  ListedItem        ListedItem? @relation(fields: [listedItemPost_id], references: [post_id], onDelete: Cascade)
 }
 
 model Comment {
   id                Int         @id @default(autoincrement())
   content           String
   listedItemPost_id Int?
-  ListedItem        ListedItem? @relation(fields: [listedItemPost_id], references: [post_id])
+  ListedItem        ListedItem? @relation(fields: [listedItemPost_id], references: [post_id], onDelete: Cascade)
 }
 
 model Images {
@@ -326,7 +326,7 @@ model Images {
   fileName      String      @default("")
   image         String
   listedItem_id Int?
-  ListedItem    ListedItem? @relation(fields: [listedItem_id], references: [post_id])
+  ListedItem    ListedItem? @relation(fields: [listedItem_id], references: [post_id], onDelete: Cascade)
 }
 
 enum UserType {

@@ -224,6 +224,22 @@ export const getModerationProductsforAdminByID = CatchAsync(
 
 export const deleteModerateProducts = CatchAsync(async (req, res, next) => {
   const { id } = req.params;
+
+  // const product = await prisma.listedItem.findUnique({
+  //   where: {
+  //     post_id: parseInt(id),
+  //   },
+  //   include: {
+  //     images: true,
+  //     comments: true,
+  //     views: true,
+  //     likes: true,
+  //     Donations: true,
+  //   },
+  // });
+
+  // console.log(product);
+
   const product = await prisma.listedItem.delete({
     where: {
       post_id: parseInt(id),
@@ -233,6 +249,7 @@ export const deleteModerateProducts = CatchAsync(async (req, res, next) => {
       comments: true,
       views: true,
       likes: true,
+      Donations: true,
     },
   });
   if (!product) {

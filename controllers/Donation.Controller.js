@@ -14,38 +14,38 @@ export const createDonation = async (req, res, next) => {
       countryCode,
     } = req.body;
 
-    const existingUser = await prisma.users.findFirst({
-      where: {
-        email: email,
-      },
-    });
+    // const existingUser = await prisma.users.findFirst({
+    //   where: {
+    //     email: email,
+    //   },
+    // });
 
     let newDonation;
-    if (existingUser) {
-      newDonation = {
-        userId: existingUser.id,
-        name: name,
-        email,
-        phone,
-        countryCode: countryCode ? countryCode : "+91",
-        pickupAddress,
-        pickupDate,
-        items,
-        amount: amount !== "" ? parseFloat(amount) : 0,
-      };
-    } else {
-      newDonation = {
-        userId: null,
-        name: name,
-        email,
-        phone,
-        countryCode: countryCode ? countryCode : "+91",
-        pickupAddress,
-        pickupDate,
-        items,
-        amount: amount !== "" ? parseFloat(amount) : 0,
-      };
-    }
+    // if (existingUser) {
+    newDonation = {
+      userId: req.user.id,
+      name: name,
+      email,
+      phone,
+      countryCode: countryCode ? countryCode : "+91",
+      pickupAddress,
+      pickupDate,
+      items,
+      amount: amount !== "" ? parseFloat(amount) : 0,
+    };
+    // } else {
+    //   newDonation = {
+    //     userId: null,
+    //     name: name,
+    //     email,
+    //     phone,
+    //     countryCode: countryCode ? countryCode : "+91",
+    //     pickupAddress,
+    //     pickupDate,
+    //     items,
+    //     amount: amount !== "" ? parseFloat(amount) : 0,
+    //   };
+    // }
 
     console.log(newDonation, "hjgdhsjfkhjkghd");
     const slug = Date.now() + name.replaceAll(" ", "-");

@@ -27,6 +27,7 @@ import {
   upadatePassword,
   upadateEmail,
   deleteUser,
+  deleteModerateProducts,
 } from "../controllers/User.Controllers.js";
 import {
   getPlans,
@@ -99,7 +100,7 @@ router.route("/plans").get(getPlans);
 router.route("/plans/:id").get(getPlansById);
 
 // for donation
-router.route("/donation/create").post(createDonation);
+router.route("/donation/create").post(authMiddleware, createDonation);
 
 //user routes
 
@@ -119,7 +120,7 @@ router
 router
   .route("/moderation/:id")
   .get(authMiddleware, getModerationProductsforAdminByID)
-  .delete(authMiddleware, deleteMyProduct);
+  .delete(authMiddleware, deleteModerateProducts);
 
 router.route("/my-products").get(authMiddleware, getMyProducts);
 router
