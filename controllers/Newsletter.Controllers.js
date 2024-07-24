@@ -68,7 +68,7 @@ export const newsletter_email_verification = CatchAsync(
     const { email, id } = req.params;
     const newsletter = await prisma.newsletter.update({
       where: {
-        id,
+        id: parseInt(id),
         email,
       },
       data: {
@@ -77,8 +77,7 @@ export const newsletter_email_verification = CatchAsync(
     });
     return res.status(200).json({
       status: true,
-      message:
-        "Thankyou for subscribing! Your email verification done.",
+      message: "Thankyou for subscribing! Your email verification done.",
     });
   }
 );
@@ -86,7 +85,7 @@ export const newsletter_unsubscribe = CatchAsync(async (req, res, next) => {
   const { email, id } = req.params;
   const newsletter = await prisma.newsletter.update({
     where: {
-      id,
+      id: parseInt(id),
       email,
     },
     data: {
