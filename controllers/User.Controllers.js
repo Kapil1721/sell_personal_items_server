@@ -61,12 +61,14 @@ export const postProduct = CatchAsync(async (req, res, next) => {
   // try {
   const { name, description, category, images, _attachments, active } =
     req.body;
+
+  console.log(category);
   const slug = Date.now() + name.replaceAll(" ", "-");
   const product = await prisma.listedItem.create({
     data: {
       name,
       desription: description,
-      category,
+      categoryId: category,
       slug,
       userId: req.user.id,
       images: {
@@ -91,7 +93,7 @@ export const postProduct = CatchAsync(async (req, res, next) => {
   //   const productImages = await prisma.images.createMany({
   //     data: [...newImages],
   //   });
-  console.log(product);
+  // console.log(product);
   res
     .status(200)
     .json({ status: true, message: "Product is listed successfully." });
