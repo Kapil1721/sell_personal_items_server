@@ -8,7 +8,7 @@ export const subscribeNewsLetter = CatchAsync(async (req, res, next) => {
   const { email } = req.body;
 
   const _newsletter = await prisma.newsletter.findUnique({ where: { email } });
-  if (_newsletter) {
+  if (_newsletter.subscribed) {
     return res.status(200).json({
       status: true,
       message: "You are already subscribed with this email ID",
