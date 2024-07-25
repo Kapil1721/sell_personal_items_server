@@ -132,9 +132,9 @@ router
 
 // for products
 
-router.route("/products").get(getAllProducts);
+router.route("/products/:userId?").get(getAllProducts);
 router.route("/like").post(authMiddleware, postLike);
-router.route("/products/:slug").get(getSingleProduct);
+router.route("/product/:slug").get(getSingleProduct);
 router.route("/product-categories").get(getProductCategories);
 
 export default router;

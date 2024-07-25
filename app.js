@@ -8,6 +8,7 @@ import path from "path";
 import globalErrorHandlers from "./controllers/Error.Controllers.js";
 import userRoutes from "./routes/UserRoutes.js";
 import newsletterRoutes from "./routes/NewsletterRoutes.js";
+import purchaseRoutes from "./routes/RequestRoutes.js";
 import AppError from "./utils/appError.js";
 import multer from "multer";
 import { sql } from "@vercel/postgres";
@@ -98,6 +99,7 @@ app.get("/api/v1", (req, res) => {
 });
 
 app.use("/api/v1/newsletter", newsletterRoutes);
+app.use("/api/v1/purchase-requests", purchaseRoutes);
 app.use("/api/v1", userRoutes);
 
 // Handle undefined routes
@@ -107,6 +109,8 @@ app.all("*", (req, res, next) => {
 
 // global error handling
 app.use(globalErrorHandlers);
+
+
 
 // Start the server
 const server = app.listen(port, () => {

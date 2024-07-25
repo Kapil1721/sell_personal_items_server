@@ -16,7 +16,8 @@ export const getProductCategories = CatchAsync(async (req, res) => {
 export const getAllProducts = CatchAsync(async (req, res) => {
   // const { id } = req.user;
   const { page, limit, sort, type, category } = req.query;
-  console.log(type);
+  const { userId } = req.params;
+  console.log(type, userId);
   const order = sort ? (sort === "Oldest" ? "asc" : "desc") : "desc";
 
   // const pageNum = parseInt(page) || 1;
@@ -52,14 +53,27 @@ export const getAllProducts = CatchAsync(async (req, res) => {
   if (category && category.toLowerCase() !== "any") {
     whereClause = { ...whereClause, categoryId: parseInt(category) };
   }
+  let likesWhereClause = true;
+  if (userId) {
+    likesWhereClause = {
+      where: {
+        user_id: parseInt(userId),
+      },
+      select: {
+        like: true,
+      },
+    };
+  }
 
   const products = await prisma.listedItem.findMany({
     where: whereClause,
     include: {
+      _count: {
+        select: { likes: true, views: true },
+      },
       images: true,
       comments: true,
-      views: true,
-      likes: true,
+      likes: likesWhereClause,
       category: true,
     },
     orderBy: {
@@ -67,7 +81,34 @@ export const getAllProducts = CatchAsync(async (req, res) => {
     },
   });
 
-  res.status(200).json({
+  if (!products) {
+    return res.status(404).json({ message: "No products found." });
+  }
+
+  // if (products) {
+  //   const views = await prisma.views.findMany({
+  //     where: {
+  //       postId: {
+  //         in: products.map((item) => item.id),
+  //       },
+  //     },
+  //   });
+  //   const likes = await prisma.likes.findMany({
+  //     where: {
+  //       postId: {
+  //         in: products.map((item) => item.id),
+  //       },
+  //     },
+  //   });
+  //   const comments = await prisma.comments.findMany({
+  //     where: {
+  //       postId: {
+  //         in: products.map((item) => item.id),
+  //       },
+  //     },
+  //   });
+  // }
+  return res.status(200).json({
     status: true,
     products,
   });
@@ -109,7 +150,7 @@ export const getSingleProduct = CatchAsync(async (req, res) => {
     });
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     status: true,
     product: {
       ...product,
@@ -117,12 +158,13 @@ export const getSingleProduct = CatchAsync(async (req, res) => {
     },
   });
 });
+
 export const postLike = CatchAsync(async (req, res) => {
   const { id, like } = req.body;
 
   const existingLike = await prisma.likes.findFirst({
     where: {
-      post_id: parseInt(id),
+      listedItemPost_id: parseInt(id),
     },
   });
 
@@ -139,7 +181,7 @@ export const postLike = CatchAsync(async (req, res) => {
   } else {
     const newLike = await prisma.likes.create({
       data: {
-        post_id: parseInt(id),
+        listedItemPost_id: parseInt(id),
         user_id: parseInt(req.user.id),
         like,
       },
