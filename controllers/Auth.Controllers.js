@@ -184,7 +184,7 @@ export const authMiddleware = async (req, res, next) => {
   const token = req.cookies.token;
   // console.log(token);
   if (!token) {
-    return res.status(403).json({ status: "404", message: "Token not found" });
+    return res.status(403).json({ status: "404" });
   }
 
   try {
