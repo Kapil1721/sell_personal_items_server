@@ -441,21 +441,27 @@ model newsletter {
 }
 
 model PurchaseRequest {
-  id        Int                   @id @default(autoincrement())
-  buyerId   Int
-  sellerId  Int
-  productId Int
-  status    PurchaseRequestStatus @default(Pending)
-  createdAt DateTime              @default(now())
-  updatedAt DateTime              @updatedAt
+  id              Int                   @id @default(autoincrement())
+  buyerId         Int
+  sellerId        Int
+  productId       Int
+  status          PurchaseRequestStatus @default(Pending)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  statusUpdatedBy StatusUpdatedBy?
+  buyer           Users                 @relation("BuyerPurchaseRequests", fields: [buyerId], references: [id])
+  seller          Users                 @relation("SellerPurchaseRequests", fields: [sellerId], references: [id])
+  product         ListedItem            @relation(fields: [productId], references: [post_id])
+}
 
-  buyer   Users      @relation("BuyerPurchaseRequests", fields: [buyerId], references: [id])
-  seller  Users      @relation("SellerPurchaseRequests", fields: [sellerId], references: [id])
-  product ListedItem @relation(fields: [productId], references: [post_id])
+enum StatusUpdatedBy {
+  Buyer
+  Seller
 }
 
 enum PurchaseRequestStatus {
   Pending
   Accepted
-  Rejected
+  Cancelled
+  Fulfilled
 }

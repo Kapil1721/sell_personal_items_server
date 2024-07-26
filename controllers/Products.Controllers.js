@@ -117,15 +117,31 @@ export const getAllProducts = CatchAsync(async (req, res) => {
 export const getSingleProduct = CatchAsync(async (req, res) => {
   const { slug } = req.params;
 
+  const { userId } = req.params;
+
+  let likesWhereClause = true;
+  if (userId) {
+    likesWhereClause = {
+      where: {
+        user_id: parseInt(userId),
+      },
+      select: {
+        like: true,
+      },
+    };
+  }
+
   const product = await prisma.listedItem.findUnique({
     where: {
       slug,
     },
     include: {
+      _count: {
+        select: { likes: true, views: true },
+      },
       images: true,
       comments: true,
-      views: true,
-      likes: true,
+      // likes: likesWhereClause,
       category: true,
       user: {
         select: {
@@ -138,8 +154,6 @@ export const getSingleProduct = CatchAsync(async (req, res) => {
       },
     },
   });
-
-  console.log(product);
 
   if (product) {
     await prisma.views.create({
