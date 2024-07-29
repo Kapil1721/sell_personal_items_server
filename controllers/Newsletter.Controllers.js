@@ -3,7 +3,7 @@ import { CatchAsync } from "../utils/CatchAsync.js";
 import prisma from "../utils/prisma.js";
 import path from "path";
 import sendEmail from "../services/Email.js";
-import { broadcast } from "../app.js";
+// import { broadcast } from "../app.js";
 
 export const subscribeNewsLetter = CatchAsync(async (req, res, next) => {
   const { email } = req.body;
@@ -58,7 +58,7 @@ export const subscribeNewsLetter = CatchAsync(async (req, res, next) => {
     message,
     html: y,
   });
-  broadcast(_newsletter);
+  // broadcast(_newsletter);
   return res.status(200).json({
     status: true,
     message:
