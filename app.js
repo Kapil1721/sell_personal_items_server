@@ -22,17 +22,31 @@ dotenv.config();
 const port = process.env.PORT;
 const cookie_secret = process.env.COOKIE_SECRET;
 const __dirname = path.resolve();
+// Middleware setup
+app.use(express.static(`${__dirname}`));
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json());
+app.use(helmet());
+app.use(cookieParser(cookie_secret));
+app.use(
+  cors({
+    origin: [
+      "https://thepreview.pro",
+      "https://sellpersonalitems.thepreview.pro",
+      "https://sellpersonalitem.vercel.app",
+      "http://localhost:5173",
+    ],
+    credentials: true,
+  })
+);
+
+
+
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
 // WebSocket setup
-export const broadcast = (data) => {
-  wss.clients.forEach((client) => {
-    if (client.readyState === 1) { // 1: OPEN
-      client.send(JSON.stringify(data));
-    }
-  });
-};
 
 wss.on("connection", (ws) => {
   console.log("Client connected");
@@ -42,22 +56,7 @@ wss.on("connection", (ws) => {
   });
 });
 
-// Middleware setup
-app.use(express.static(`${__dirname}`));
-app.use(bodyParser.json({ limit: "10mb" }));
-app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
-app.use(express.json());
-app.use(helmet());
-app.use(cookieParser(cookie_secret));
-app.use(cors({
-  origin: [
-    "https://thepreview.pro",
-    "https://sellpersonalitems.thepreview.pro",
-    "https://sellpersonalitem.vercel.app",
-    "http://localhost:5173",
-  ],
-  credentials: true,
-}));
+
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -133,3 +132,12 @@ process.on("uncaughtException", (err) => {
   console.log(err.name, err.message);
   process.exit(1);
 });
+
+export const broadcast = (data) => {
+  wss.clients.forEach((client) => {
+    if (client.readyState === 1) {
+      // 1: OPEN
+      client.send(JSON.stringify(data));
+    }
+  });
+};
