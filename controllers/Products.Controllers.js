@@ -165,6 +165,7 @@ export const getSingleProduct = CatchAsync(async (req, res) => {
       user: {
         select: {
           name: true,
+          online:true,
           username: true,
           userType: true,
           countryCode: true,

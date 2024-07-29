@@ -1,34 +1,57 @@
-import WebSocket from "ws";
+import { WebSocketServer } from "ws";
 import prisma from "../utils/prisma.js";
 
-const wss = new WebSocket.Server({ port: 8080 });
+class BroadcastService {
+  constructor(server) {
+    this.wss = new WebSocketServer({ server });
+    this.setupWebSocketEvents();
+  }
 
-wss.on("connection", (ws, req) => {
-  // Extract userId from query parameters or authentication token
-  const userId = parseInt(req.url.split("?userId=")[1], 10);
+  setupWebSocketEvents() {
+    this.wss.on("connection", (ws, req) => {
+      console.log("Client connected", req.url);
+      const userId = parseInt(req.url.split("?userId=")[1], 10);
 
-  // Update user status to online
-  prisma.users
-    .update({
-      where: { id: userId },
-      data: { online: true, lastSeen: new Date() },
-    })
-    .catch(console.error);
+      // Update user status to online
+      if (userId) {
+        prisma.users
+          .update({
+            where: { id: userId },
+            data: { online: true, lastSeen: new Date() },
+          })
+          .catch(console.error);
+      }
+      ws.on("close", () => {
+        console.log("Client disconnected");
+        if (userId) {
+          prisma.users
+            .update({
+              where: { id: userId },
+              data: { online: false, lastSeen: new Date() },
+            })
+            .catch(console.error);
+        }
+      });
 
-  ws.on("close", () => {
-    // Update user status to offline when the connection is closed
-    prisma.users
-      .update({
-        where: { id: userId },
-        data: { online: false, lastSeen: new Date() },
-      })
-      .catch(console.error);
-  });
+      ws.on("error", (error) => {
+        console.error("WebSocket error:", error);
+      });
 
-  ws.on("message", (message) => {
-    console.log(`Received message ${message} from user ${userId}`);
-    // Optionally handle incoming messages
-  });
-});
+      ws.on("message", (message) => {
+        console.log(`Received message ${message} from user ${userId}`);
+        // Optionally handle incoming messages
+      });
+    });
+  }
 
-console.log("WebSocket server started on ws://localhost:8080");
+  broadcast(data) {
+    this.wss.clients.forEach((client) => {
+      if (client.readyState === client.OPEN) {
+        // Ensure the client is open
+        client.send(JSON.stringify(data));
+      }
+    });
+  }
+}
+
+export default BroadcastService;
