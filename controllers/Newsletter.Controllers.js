@@ -3,12 +3,14 @@ import { CatchAsync } from "../utils/CatchAsync.js";
 import prisma from "../utils/prisma.js";
 import path from "path";
 import sendEmail from "../services/Email.js";
+import { broadcast } from "../app.js";
 
 export const subscribeNewsLetter = CatchAsync(async (req, res, next) => {
   const { email } = req.body;
 
   const _newsletter = await prisma.newsletter.findUnique({ where: { email } });
-  if (_newsletter.subscribed) {
+  if (_newsletter) {
+    // broadcast(_newsletter);
     return res.status(200).json({
       status: true,
       message: "You are already subscribed with this email ID",
@@ -56,6 +58,7 @@ export const subscribeNewsLetter = CatchAsync(async (req, res, next) => {
     message,
     html: y,
   });
+  broadcast(_newsletter);
   return res.status(200).json({
     status: true,
     message:
