@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
 import bcrypt from "bcryptjs";
 import { count, log } from "console";
-import { broadcastService } from "../app.js";
+// import { broadcastService } from "../app.js";
 
 const prisma = new PrismaClient();
 
