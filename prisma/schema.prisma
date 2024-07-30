@@ -9,36 +9,47 @@ datasource db {
 }
 
 model Users {
-  id                 Int               @id @default(autoincrement())
-  username           String            @unique @db.VarChar(30)
-  email              String            @unique @db.VarChar(50)
-  name               String            @db.VarChar(50)
-  countryCode        String            @db.VarChar(10)
-  address            String?           @db.VarChar(500)
-  profileImage       String?
-  profileDescription String?
-  contactNumber      String            @db.VarChar(50)
-  whatsApp           Boolean?          @default(false)
-  viber              Boolean?          @default(true)
-  password           String            @db.VarChar(250)
-  verification       String?           @db.VarChar(255)
-  verified           Boolean?          @default(false)
-  active             Boolean?          @default(true)
-  userType           UserType?         @default(Recipient)
-  role               Role              @default(USER)
-  createdAt          DateTime?         @default(now())
-  updatedAt          DateTime?         @updatedAt
-  buyer              Boolean?          @default(true)
-  seller             Boolean?          @default(false)
-  donor              Boolean?          @default(false)
-  membership         Memberships?
-  listedItem         ListedItem[]
-  donations          Donations[]
-  socailLinks        SocialLinks[]
-  online             Boolean           @default(false)
-  lastSeen           DateTime?
-  purchaseRequests   PurchaseRequest[] @relation("BuyerPurchaseRequests")
-  sellerRequests     PurchaseRequest[] @relation("SellerPurchaseRequests")
+  id                  Int                   @id @default(autoincrement())
+  username            String                @unique @db.VarChar(30)
+  email               String                @unique @db.VarChar(50)
+  name                String                @db.VarChar(50)
+  countryCode         String                @db.VarChar(10)
+  address             String?               @db.VarChar(500)
+  profileImage        String?
+  profileDescription  String?
+  contactNumber       String                @db.VarChar(50)
+  whatsApp            Boolean?              @default(false)
+  viber               Boolean?              @default(true)
+  password            String                @db.VarChar(250)
+  verification        String?               @db.VarChar(255)
+  verified            Boolean?              @default(false)
+  active              Boolean?              @default(true)
+  userType            UserType?             @default(Recipient)
+  role                Role                  @default(USER)
+  createdAt           DateTime?             @default(now())
+  updatedAt           DateTime?             @updatedAt
+  buyer               Boolean?              @default(true)
+  seller              Boolean?              @default(false)
+  donor               Boolean?              @default(false)
+  membership          Memberships?
+  listedItem          ListedItem[]
+  donations           Donations[]
+  socailLinks         SocialLinks[]
+  online              Boolean               @default(false)
+  lastSeen            DateTime?
+  purchaseRequests    PurchaseRequest[]     @relation("BuyerPurchaseRequests")
+  sellerRequests      PurchaseRequest[]     @relation("SellerPurchaseRequests")
+  favoriteProductList favoriteProductList[]
+  RefreshToken        RefreshToken[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      Users    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Sellers {
@@ -108,6 +119,14 @@ model Donors {
   // PurchaseRequest    PurchaseRequest[]
   membershipsId      Int?
   usersId            Int?
+}
+
+model favoriteProductList {
+  id       Int        @id @default(autoincrement())
+  userId   Int
+  user     Users      @relation(fields: [userId], references: [id])
+  products ListedItem @relation(fields: [postId], references: [post_id])
+  postId   Int
 }
 
 model Memberships {
@@ -320,34 +339,35 @@ model CategoryAttributes {
 }
 
 model ListedItem {
-  post_id         Int                @id @default(autoincrement())
-  slug            String             @unique @db.VarChar(250)
-  name            String             @db.VarChar(100)
-  desription      String?
-  categoryId      Int?               @default(1)
-  category        ItemCategories?    @relation(fields: [categoryId], references: [id])
-  expires         DateTime?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  active          Boolean            @default(true)
-  isApproved      Boolean            @default(false)
-  status          ListedItem_Status? @default(Draft)
-  userId          Int?
-  comments        Comment[]
-  images          Images[]
-  likes           Likes[]
-  reviews         Reviews[]
-  user            Users?             @relation(fields: [userId], references: [id])
-  views           Views[]
-  itemsType       ItemTypes?         @default(SALE)
-  Donations       Donations?         @relation(fields: [donationsId], references: [id], onDelete: Cascade)
-  donationsId     Int?
-  quantity        Int?               @default(10)
-  PurchaseRequest PurchaseRequest[]
-  Sellers         Sellers?           @relation(fields: [sellersId], references: [id])
-  sellersId       Int?
-  Donors          Donors?            @relation(fields: [donorsId], references: [id])
-  donorsId        Int?
+  post_id             Int                   @id @default(autoincrement())
+  slug                String                @unique @db.VarChar(250)
+  name                String                @db.VarChar(100)
+  desription          String?
+  categoryId          Int?                  @default(1)
+  category            ItemCategories?       @relation(fields: [categoryId], references: [id])
+  expires             DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  active              Boolean               @default(true)
+  isApproved          Boolean               @default(false)
+  status              ListedItem_Status?    @default(Draft)
+  userId              Int?
+  comments            Comment[]
+  images              Images[]
+  likes               Likes[]
+  reviews             Reviews[]
+  user                Users?                @relation(fields: [userId], references: [id])
+  views               Views[]
+  itemsType           ItemTypes?            @default(SALE)
+  Donations           Donations?            @relation(fields: [donationsId], references: [id], onDelete: Cascade)
+  donationsId         Int?
+  quantity            Int?                  @default(10)
+  PurchaseRequest     PurchaseRequest[]
+  Sellers             Sellers?              @relation(fields: [sellersId], references: [id])
+  sellersId           Int?
+  Donors              Donors?               @relation(fields: [donorsId], references: [id])
+  donorsId            Int?
+  favoriteProductList favoriteProductList[]
 }
 
 model Reviews {

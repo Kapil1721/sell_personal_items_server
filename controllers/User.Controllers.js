@@ -376,7 +376,11 @@ export const getMyProducts = CatchAsync(async (req, res, next) => {
       name: { contains: searchQuery, mode: "insensitive" },
     },
     include: {
-      images: true,
+      images: {
+        select: {
+          image: true,
+        },
+      },
       comments: true,
       views: true,
       likes: true,

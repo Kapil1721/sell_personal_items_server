@@ -125,6 +125,45 @@ export const getAllProducts = CatchAsync(async (req, res) => {
     products: productsWithLikeStatus,
   });
 });
+export const getFavoriteProducts = CatchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const products = await prisma.favoriteProductList.findMany({
+    where: {
+      userId,
+    },
+    include: {
+      products: {
+        include: {
+          images: true,
+          comments: true,
+          category: true,
+          views: true,
+          likes: true,
+          user: {
+            select: {
+              name: true,
+              username: true,
+              userType: true,
+              countryCode: true,
+              contactNumber: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!products) {
+    return res.status(404).json({ message: "No products found." });
+  }
+  // const productsWithLikeStatus = products.map((product) => ({
+  //   ...product,
+  //   likeStatus: product.likes.length > 0 ? product.likes[0].like : false,
+  // }));
+  return res.status(200).json({
+    status: true,
+    products: products,
+  });
+});
 
 export const getSingleProduct = CatchAsync(async (req, res) => {
   const { slug } = req.params;
@@ -165,7 +204,7 @@ export const getSingleProduct = CatchAsync(async (req, res) => {
       user: {
         select: {
           name: true,
-          online:true,
+          online: true,
           username: true,
           userType: true,
           countryCode: true,
@@ -226,5 +265,61 @@ export const postLike = CatchAsync(async (req, res) => {
     });
     console.log(newLike, "newly");
     return res.status(200).json({ status: true, data: newLike });
+  }
+});
+
+export const AddToFavorite = CatchAsync(async (req, res) => {
+  const { id } = req.body;
+  const userId = req.user.id;
+  console.log(id, userId);
+  const existingFavorite = await prisma.favoriteProductList.findFirst({
+    where: {
+      postId: parseInt(id),
+      userId: parseInt(userId),
+    },
+  });
+  if (existingFavorite) {
+    return res
+      .status(200)
+      .json({ status: true, message: "This item already present in favorite" });
+  } else {
+    const newFavorite = await prisma.favoriteProductList.create({
+      data: {
+        postId: parseInt(id),
+        userId: parseInt(userId),
+      },
+      include: {
+        products: true,
+      },
+    });
+    return res.status(200).json({
+      status: true,
+      data: newFavorite,
+      message: "Item added to favorite",
+    });
+  }
+});
+export const RemoveFromFavorite = CatchAsync(async (req, res) => {
+  const { id } = req.body;
+  const userId = req.user.id;
+  console.log(id, userId);
+  const existingFavorite = await prisma.favoriteProductList.findUnique({
+    where: {
+      id: parseInt(id),
+    },
+  });
+  if (!existingFavorite) {
+    return res.status(404).json({ status: false, message: "No record found" });
+  } else {
+    const newFavorite = await prisma.favoriteProductList.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    return res.status(200).json({
+      status: true,
+      data: newFavorite,
+      message: "Item added to favorite",
+    });
   }
 });

@@ -6,6 +6,9 @@ import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
 import AppError from "../utils/appError.js";
 
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET;
+
 const prisma = new PrismaClient();
 
 export const signToken = (user) => {
@@ -110,10 +113,7 @@ export const userSignUp = CatchAsync(async (req, res, next) => {
     // createSendToken({ userId: user.id, email: user.email }, 201, res);
   } catch (error) {
     console.log(error);
-    return next(
-      new AppError("Something went wrong. Try again later!"),
-      500
-    );
+    return next(new AppError("Something went wrong. Try again later!"), 500);
   }
 });
 
@@ -327,3 +327,145 @@ export const AdminLogin = CatchAsync(async (req, res, next) => {
 
   createSendToken({ ...user, password: undefined }, 200, res);
 });
+
+
+// // just for testing
+// export const RefreshToken = CatchAsync(async (req, res) => {
+//   const refreshToken = req.cookies.refreshToken;
+//   if (!refreshToken)
+//     return res.status(401).json({ error: "Refresh token not provided" });
+
+//   try {
+//     const payload = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+//     const user = await prisma.users.findUnique({
+//       where: { id: payload.userId },
+//     });
+//     const storedToken = await prisma.refreshToken.findUnique({
+//       where: { token: refreshToken },
+//     });
+
+//     if (!user || !storedToken) throw new Error("Invalid token");
+
+//     const newAccessToken = jwt.sign({ userId: user.id }, JWT_SECRET, {
+//       expiresIn: process.env.JWT_EXPIRES_IN,
+//     });
+//     const newRefreshToken = jwt.sign({ userId: user.id }, JWT_REFRESH_SECRET, {
+//       expiresIn: process.env.JWT_REFRESHTOKEN_EXPIRES_IN,
+//     });
+
+//     await prisma.refreshToken.delete({ where: { token: refreshToken } });
+//     await prisma.refreshToken.create({
+//       data: { token: newRefreshToken, userId: user.id },
+//     });
+
+//     res.cookie("refreshToken", newRefreshToken, {
+//       httpOnly: true,
+//       secure: true,
+//       sameSite: "Strict",
+//     });
+//     res.json({ accessToken: newAccessToken });
+//   } catch (error) {
+//     return res.status(401).json({ error: "Invalid refresh token" });
+//   }
+// });
+
+// export const Login = CatchAsync(async (req, res,next) => {
+//   const { usernameoremail, password, accountType } = req.body;
+
+//   const checkAccountPermission =
+//     accountType === "DONOR"
+//       ? { donor: true, buyer: true }
+//       : accountType === "SELLER"
+//       ? { seller: true, buyer: true }
+//       : { buyer: true };
+
+//   if (!usernameoremail || !password) {
+//     return next(
+//       new AppError("Please provide username/email and password", 400)
+//     );
+//   }
+//   const user = await prisma.users.findFirst({
+//     select: {
+//       id: true,
+//       username: true,
+//       email: true,
+//       contactNumber: true,
+//       password: true,
+//       role: true,
+//       userType: true,
+//       active: true,
+//       ...checkAccountPermission,
+//     },
+//     where: {
+//       OR: [{ email: usernameoremail }, { username: usernameoremail }],
+//       ...checkAccountPermission,
+//     },
+//   });
+//   if (!user || !(await bcrypt.compare(password, user.password))) {
+//     return res.status(401).json({ error: "Invalid email or password" });
+//   }
+
+//   const accessToken = jwt.sign({ userId: user.id }, JWT_SECRET, {
+//     expiresIn: process.env.JWT_EXPIRES_IN,
+//   });
+//   const refreshToken = jwt.sign({ userId: user.id }, JWT_REFRESH_SECRET, {
+//     expiresIn: process.env.JWT_REFRESHTOKEN_EXPIRES_IN,
+//   });
+
+
+//   await prisma.refreshToken.create({
+//     data: { token: refreshToken, userId: user.id },
+//   });
+
+//   return res.status(200).json({
+//     status: "success",
+//     token:accessToken,
+//     data: {
+//       ...user,
+//       password:undefined
+//     },
+//   });
+// });
+
+// export const authenticate = CatchAsync((req, res, next) => {
+//   const authHeader = req.headers.authorization;
+//   if (!authHeader)
+//     return res
+//       .status(401)
+//       .json({ status: false, error: "Authorization header not provided" });
+
+//   const token = authHeader.split(" ")[1];
+//   try {
+//     const payload = jwt.verify(token, JWT_SECRET);
+//     req.userId = payload.userId;
+//     next();
+//   } catch (error) {
+//     return res.status(401).json({ status: false, error: "Invalid token" });
+//   }
+// });
+
+// app.post('/refresh-token', async (req, res) => {
+//   const refreshToken = req.cookies.refreshToken;
+//   if (!refreshToken) return res.status(401).json({ error: 'Refresh token not provided' });
+
+//   try {
+//     const payload = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+//     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+//     const storedToken = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
+
+//     if (!user || !storedToken) throw new Error('Invalid token');
+
+//     const newAccessToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '15m' });
+//     const newRefreshToken = jwt.sign({ userId: user.id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
+
+//     await prisma.refreshToken.delete({ where: { token: refreshToken } });
+//     await prisma.refreshToken.create({
+//       data: { token: newRefreshToken, userId: user.id },
+//     });
+
+//     res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true, sameSite: 'Strict' });
+//     res.json({ accessToken: newAccessToken });
+//   } catch (error) {
+//     return res.status(401).json({ error: 'Invalid refresh token' });
+//   }
+// });
