@@ -6,8 +6,8 @@ import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
 import AppError from "../utils/appError.js";
 
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const JWT_SECRET = process.env.JWT_SECRET;
+// const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+// const JWT_SECRET = process.env.JWT_SECRET;
 
 const prisma = new PrismaClient();
 
@@ -194,7 +194,7 @@ export const authMiddleware = async (req, res, next) => {
     req.user = decoded; // Attach decoded user data to request object
     next();
   } catch (error) {
-    if (err.name === "TokenExpiredError") {
+    if (error.name === "TokenExpiredError") {
       res.status(401).json({
         status: "expired",
         message: "Session is expired. Login again",

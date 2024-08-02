@@ -41,6 +41,7 @@ model Users {
   sellerRequests      PurchaseRequest[]     @relation("SellerPurchaseRequests")
   favoriteProductList favoriteProductList[]
   RefreshToken        RefreshToken[]
+  PromotedProduct     PromotedProduct[]
 }
 
 model RefreshToken {
@@ -148,20 +149,21 @@ model Memberships {
 }
 
 model SubscriptionPlan {
-  id             Int            @id @default(autoincrement())
-  name           String
-  price          Float
-  priceRate      DurationTypes? @default(MONTH)
-  duration       Int
-  durationType   DurationTypes? @default(MONTH)
-  offerType      OfferType?
-  offerValue     Float?
-  active         Boolean?       @default(true)
-  createdAt      DateTime?      @default(now())
-  updatedAt      DateTime?      @updatedAt
-  oneTimePayment Boolean?       @default(false)
-  subscriptions  Memberships[]
-  features       PlanFeature[]
+  id              Int               @id @default(autoincrement())
+  name            String
+  price           Float
+  priceRate       DurationTypes?    @default(MONTH)
+  duration        Int
+  durationType    DurationTypes?    @default(MONTH)
+  offerType       OfferType?
+  offerValue      Float?
+  active          Boolean?          @default(true)
+  createdAt       DateTime?         @default(now())
+  updatedAt       DateTime?         @updatedAt
+  oneTimePayment  Boolean?          @default(false)
+  subscriptions   Memberships[]
+  features        PlanFeature[]
+  PromotedProduct PromotedProduct[]
 }
 
 model Feature {
@@ -368,6 +370,7 @@ model ListedItem {
   Donors              Donors?               @relation(fields: [donorsId], references: [id])
   donorsId            Int?
   favoriteProductList favoriteProductList[]
+  PromotedProduct     PromotedProduct[]
 }
 
 model Reviews {
@@ -441,6 +444,7 @@ enum ListedItem_Status {
   Active
   Pending
   Draft
+  Decline
 }
 
 enum ImageTypes {
@@ -484,4 +488,14 @@ enum PurchaseRequestStatus {
   Accepted
   Cancelled
   Fulfilled
+}
+
+model PromotedProduct {
+  id     Int              @id @default(autoincrement())
+  userId Int
+  user   Users            @relation(fields: [userId], references: [id])
+  postId Int
+  posts  ListedItem       @relation(fields: [postId], references: [post_id])
+  planId Int
+  plan   SubscriptionPlan @relation(fields: [planId], references: [id])
 }

@@ -376,15 +376,13 @@ export const getMyProducts = CatchAsync(async (req, res, next) => {
       name: { contains: searchQuery, mode: "insensitive" },
     },
     include: {
+      _count: { select: { views: true, likes: true, comments: true } },
       images: {
         select: {
           image: true,
         },
       },
-      comments: true,
-      views: true,
-      likes: true,
-      category: true,
+      category: true
     },
     orderBy: {
       createdAt: order,

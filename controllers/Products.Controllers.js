@@ -323,3 +323,25 @@ export const RemoveFromFavorite = CatchAsync(async (req, res) => {
     });
   }
 });
+
+export const promoteProduct = CatchAsync(async (req, res) => {
+  const { postId, planId } = req.body;
+  const userId = req.user.id;
+
+  const promotedProducts = await prisma.promotedProduct.create({
+    data: {
+      postId: parseInt(postId),
+      planId: parseInt(planId),
+      userId: userId,
+    },
+  });
+  if (!promotedProducts) {
+    return res.status(404).json({ status: false, message: "No record found" });
+  } else {
+    return res.status(200).json({
+      status: true,
+      data: promotedProducts,
+      message: "Promoted Successfully",
+    });
+  }
+});

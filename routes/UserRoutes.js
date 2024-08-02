@@ -46,6 +46,7 @@ import {
   getProductCategories,
   getSingleProduct,
   postLike,
+  promoteProduct,
   RemoveFromFavorite,
 } from "../controllers/Products.Controllers.js";
 const prisma = new PrismaClient();
@@ -148,11 +149,13 @@ router
 
 router.route("/products/:userId?").get(getAllProducts);
 router.route("/like").post(authMiddleware, postLike);
+router.route("/promote").post(authMiddleware, promoteProduct);
+router.route("/promote").get(authMiddleware, promoteProduct);
 router
   .route("/favorite")
   .get(authMiddleware, getFavoriteProducts)
   .post(authMiddleware, AddToFavorite)
-  .delete(authMiddleware,RemoveFromFavorite)
+  .delete(authMiddleware, RemoveFromFavorite);
 router.route("/product/:slug").get(getSingleProduct);
 router.route("/product-categories").get(getProductCategories);
 
