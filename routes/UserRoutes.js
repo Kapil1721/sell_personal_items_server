@@ -3,12 +3,16 @@ import {
   AdminLogin,
   // authenticate,
   authMiddleware,
+  changePassword,
   getValidUser,
+  sendOtp,
   // Login,
   // RefreshToken,
   userLogin,
   userLogout,
   userSignUp,
+  verifyOtp,
+  verifyUser,
 } from "../controllers/Auth.Controllers.js";
 import AppError from "../utils/appError.js";
 import {
@@ -73,6 +77,10 @@ router.route("/signup").post(userSignUp);
 router.route("/logout").post(userLogout);
 router.route("/login").post(userLogin);
 router.route("/admin/login").post(AdminLogin);
+router.route("/send-otp").post(sendOtp);
+router.route("/change-password").post(changePassword);
+router.route("/validate-otp").post(verifyOtp);
+router.route("/u-verify").get(verifyUser);
 router.route("/check-session").get(authMiddleware, async (req, res, next) => {
   try {
     // const _user = req.user.delete("iat")

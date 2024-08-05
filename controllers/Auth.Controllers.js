@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
 import AppError from "../utils/appError.js";
+import sendEmail from "../services/Email.js";
 
 // const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 // const JWT_SECRET = process.env.JWT_SECRET;
@@ -92,25 +93,27 @@ export const userSignUp = CatchAsync(async (req, res, next) => {
     const user = await prisma.users.create({ data: newUser });
     createSendToken({ userId: user.id, email: user.email }, 201, res);
 
-    // const message = ``;
+    const message = ``;
 
-    // const __dirname = path.resolve();
+    const __dirname = path.resolve();
 
-    // let x = fs.readFileSync(__dirname + "../templates/accountRegister.html", "utf8");
+    let x = fs.readFileSync(__dirname + "/templates/emailTemp.html", "utf8");
 
-    // let y = x
-    //   .replace("{{name}}", req.body.name)
-    //   .replace(
-    //     "{{link}}",
-    //     `https://reviewsix.vercel.app/api/v1/u-verify/${varificationToken}/${user.id}`
-    //   );
-    // await sendMail({
-    //   email: req.body.email,
-    //   subject: "Email Verification: Thank you for registering with us",
-    //   message,
-    //   html: y,
-    // });
-    // createSendToken({ userId: user.id, email: user.email }, 201, res);
+    let y = x
+      .replace("{{name}}", user.username)
+      .replace(
+        "{{link}}",
+        `https://sell-personal-items-server.vercel.app/api/v1/u-verify/${verificationToken}/${user.id}`
+      )
+      .replace("{{email}}", req.email)
+      .replace("{{password}}", req.password);
+    await sendMail({
+      email: req.body.email,
+      subject: "Email Verification: Thank you for registering with us",
+      message,
+      html: y,
+    });
+    createSendToken({ userId: user.id, email: user.email }, 201, res);
   } catch (error) {
     console.log(error);
     return next(new AppError("Something went wrong. Try again later!"), 500);
@@ -178,6 +181,25 @@ export const userLogin = CatchAsync(async (req, res, next) => {
   }
 
   createSendToken({ ...user, password: undefined }, 200, res);
+});
+
+export const verifyUser = CatchAsync(async (req, res, next) => {
+  const { token, id } = req.query;
+  const user = prisma.users.update({
+    data: {
+      verified: true,
+    },
+    where: {
+      id: id,
+      verification: token,
+    },
+  });
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+  return res.status(200).json({
+    message: "User verification has been completed successfully",
+  });
 });
 
 export const authMiddleware = async (req, res, next) => {
@@ -328,6 +350,124 @@ export const AdminLogin = CatchAsync(async (req, res, next) => {
   createSendToken({ ...user, password: undefined }, 200, res);
 });
 
+export const sendOtp = CatchAsync(async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return next(new AppError("Please provide email", 400));
+  }
+
+  const user = await prisma.users.findFirst({
+    select: {
+      id: true,
+      username: true,
+      email: true,
+    },
+    where: {
+      email,
+    },
+  });
+
+  console.log(user);
+  // If user not found, return error
+  if (!user) {
+    res.clearCookie("token");
+    return res.status(403).json({ message: "Invalid email address" });
+  }
+
+  let otp = generateOtp();
+  console.log(otp);
+
+  const ot_expiry = signToken({ ...user, otp });
+  res.cookie("ot_expiry", ot_expiry, {
+    httpOnly: true,
+    sameSite: "none",
+    maxAge: 300000, // 5 min in milliseconds
+    secure: true, // Only set secure cookie in production
+  });
+
+  await sendEmail({
+    email: email,
+    subject: "Forget Password: OTP",
+    message: `
+  Hi ${user.username},
+
+  You recently requested to forget password otp. Your forget password otp is  ${otp}.
+  This password otp is only valid for the next 5 minutes.
+
+  If you did not request a password reset, please ignore this email or reply to let us know.
+
+  Thanks, the [sell personal team] team`,
+  });
+
+  res.status(200).json({ status: true, message: "OTP sent successfully" });
+});
+
+export const verifyOtp = CatchAsync(async (req, res, next) => {
+  const { otp } = req.body;
+  const { ot_expiry } = req.cookies;
+  if (!ot_expiry) {
+    return res.status(404).json({ message: "OTP expired" });
+  }
+
+  const decoded_otp = jwt.verify(ot_expiry, process.env.JWT_SECRET);
+  console.log(otp, decoded_otp);
+
+  if (Number(otp) !== decoded_otp.otp) {
+    return res.status(400).json({
+      status: false,
+      message: "Invalid OTP",
+    });
+  }
+
+  return res
+    .status(200)
+    .json({ status: true, message: "OTP verified successfully" });
+});
+
+export const changePassword = CatchAsync(async (req, res, next) => {
+  const { newPassword, confirmPassword, email } = req.body;
+  // const { ot_expiry } = req.cookies;
+
+  if (!newPassword || !confirmPassword) {
+    return res
+      .status(400)
+      .json({ status: false, message: "All fields are required" });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({
+      status: false,
+      message: "new password and confirm password are not matched",
+    });
+  }
+
+  // const user = await prisma.users.findFirst({
+  //   where: {
+  //     email: email,
+  //   },
+  // });
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  const updatedUser = await prisma.users.update({
+    where: {
+      email: email,
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
+
+  if (!updatedUser) {
+    return res.status(400).json({
+      status: false,
+      message: "Something went wrong, Please try after sometime",
+    });
+  }
+
+  return res
+    .status(200)
+    .json({ status: true, message: "Password changed successfully" });
+});
 
 // // just for testing
 // export const RefreshToken = CatchAsync(async (req, res) => {
@@ -412,7 +552,6 @@ export const AdminLogin = CatchAsync(async (req, res, next) => {
 //     expiresIn: process.env.JWT_REFRESHTOKEN_EXPIRES_IN,
 //   });
 
-
 //   await prisma.refreshToken.create({
 //     data: { token: refreshToken, userId: user.id },
 //   });
@@ -469,3 +608,17 @@ export const AdminLogin = CatchAsync(async (req, res, next) => {
 //     return res.status(401).json({ error: 'Invalid refresh token' });
 //   }
 // });
+
+const generateOtp = () => {
+  let otp;
+
+  otp = (Math.random() + Number(process.env.OTP_SECRET)) * 1000000;
+  otp = Number(
+    (Math.random() + Number(process.env.OTP_SECRET))
+      .toString()
+      .split(".")[1]
+      .slice(0, 6)
+  );
+
+  return otp;
+};
