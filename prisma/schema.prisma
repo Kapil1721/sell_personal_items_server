@@ -2,16 +2,16 @@ generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider  = "mysql"
-  url       = env("DB_URI")
-  // directUrl = env("sellpersonal_URL_NON_POOLING")
-}
 // datasource db {
-//   provider  = "postgresql"
-//   url       = env("sellpersonal_PRISMA_URL")
-//   directUrl = env("sellpersonal_URL_NON_POOLING")
+//   provider  = "mysql"
+//   url       = env("DB_URI")
+//   // directUrl = env("sellpersonal_URL_NON_POOLING")
 // }
+datasource db {
+  provider  = "postgresql"
+  url       = env("sellpersonal_PRISMA_URL")
+  directUrl = env("sellpersonal_URL_NON_POOLING")
+}
 
 model Users {
   id                  Int                   @id @default(autoincrement())
