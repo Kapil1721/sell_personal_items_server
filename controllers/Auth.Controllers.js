@@ -611,15 +611,6 @@ export const changePassword = CatchAsync(async (req, res, next) => {
 // });
 
 const generateOtp = () => {
-  let otp;
-
-  otp = (Math.random() + Number(process.env.OTP_SECRET)) * 1000000;
-  otp = Number(
-    (Math.random() + Number(process.env.OTP_SECRET))
-      .toString()
-      .split(".")[1]
-      .slice(0, 6)
-  );
-
-  return otp;
+  const otp = crypto.randomInt(100000, 1000000);
+  return otp.toString();
 };
