@@ -21,10 +21,10 @@ export const signToken = (user) => {
 export const createSendToken = (user, statusCode, res) => {
   const token = signToken(user);
   res.cookie("token", token, {
-    httpOnly: false,
+    httpOnly: true,
     sameSite: "none",
     maxAge: 24 * 3600000, // 1 day in milliseconds
-    secure: process.env.NODE_ENV === "production", // Only set secure cookie in production
+    secure: true, // Only set secure cookie in production
   });
   return res.status(statusCode).json({
     status: "success",
@@ -297,7 +297,6 @@ export const getValidUser = async (req, res, next) => {
 
 export const userLogout = CatchAsync(async (req, res, next) => {
   res.clearCookie("token");
-  res.clearCookie("_session");
   res.status(200).json({
     status: 200,
     message: "Logged out successfully",
@@ -464,6 +463,7 @@ export const changePassword = CatchAsync(async (req, res, next) => {
     });
   }
 
+  res.clearCookie("ot_expiry");
   return res
     .status(200)
     .json({ status: true, message: "Password changed successfully" });
