@@ -413,7 +413,7 @@ export const verifyOtp = CatchAsync(async (req, res, next) => {
   const decoded_otp = jwt.verify(ot_expiry, process.env.JWT_SECRET);
   console.log(otp, decoded_otp);
 
-  if (Number(otp) !== decoded_otp.otp) {
+  if (otp !== decoded_otp.otp) {
     return res.status(400).json({
       status: false,
       message: "Invalid OTP",
