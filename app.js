@@ -19,6 +19,20 @@ dotenv.config();
 // Create an Express app
 const app = express();
 
+// Enable trust proxy to ensure accurate client IP identification
+app.set("trust proxy", true);
+
+// Rate limiter middleware setup (example)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Apply the rate limiting middleware to all requests
+app.use(limiter);
+
 // Define constants from environment variables
 const port = process.env.PORT || 3000;
 const cookieSecret = process.env.COOKIE_SECRET || "default_secret";
@@ -30,24 +44,18 @@ app.use(express.static(`${__dirname}`));
 
 // Security middlewares
 app.use(helmet());
-app.use(cors({
-  origin: [
-    "https://thepreview.pro",
-    "https://sellpersonalitems.thepreview.pro",
-    "https://sellpersonalitem.vercel.app",
-    "http://localhost:5173",
-  ],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: [
+      "https://thepreview.pro",
+      "https://sellpersonalitems.thepreview.pro",
+      "https://sellpersonalitem.vercel.app",
+      "http://localhost:5173",
+    ],
+    credentials: true,
+  })
+);
 app.use(cookieParser(cookieSecret));
-
-// Rate limiter middleware
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later.",
-});
-app.use("/api", apiLimiter);
 
 // Parsing middleware
 app.use(bodyParser.json({ limit: "10mb" }));
