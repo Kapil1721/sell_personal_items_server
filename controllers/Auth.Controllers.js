@@ -6,6 +6,7 @@ import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
 import AppError from "../utils/appError.js";
 import sendEmail from "../services/Email.js";
+import path from "path";
 
 // const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 // const JWT_SECRET = process.env.JWT_SECRET;
