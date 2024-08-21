@@ -20,18 +20,18 @@ dotenv.config();
 const app = express();
 
 // Enable trust proxy to ensure accurate client IP identification
-app.set("trust proxy", true);
+// app.set("trust proxy", true);
 
-// Rate limiter middleware setup (example)
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-});
+// // Rate limiter middleware setup (example)
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 100, // limit each IP to 100 requests per windowMs
+//   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+//   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+// });
 
 // Apply the rate limiting middleware to all requests
-app.use(limiter);
+// app.use(limiter);
 
 // Define constants from environment variables
 const port = process.env.PORT || 3000;

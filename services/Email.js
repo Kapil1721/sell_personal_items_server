@@ -15,10 +15,10 @@ const sendEmail = async (options) => {
   });
 
   const mailOptions = {
-    from: "review@thetestingserver.com",
+    from: "noreply@thetestingserver.com",
     to: options.email,
     subject: options.subject,
-    text: options.message,
+    text: options.message|| null,
     html: options?.html || null,
   };
   // console.log(mailOptions);
