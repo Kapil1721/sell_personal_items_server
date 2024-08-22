@@ -28,8 +28,7 @@ export const createDonation = async (req, res, next) => {
         countryCode: countryCode ? countryCode : "+91",
         pickupAddress,
         pickupDate,
-        items,
-        amount: amount !== "" ? parseFloat(amount) : 0,
+        items
       };
 
       console.log(newDonation, "hjgdhsjfkhjkghd");
@@ -40,7 +39,6 @@ export const createDonation = async (req, res, next) => {
           email: newDonation.email,
           countryCode: newDonation.countryCode,
           phone: newDonation.phone,
-          amount: newDonation.amount,
           createdAt: new Date(),
           usersId: newDonation.userId,
           items: {
