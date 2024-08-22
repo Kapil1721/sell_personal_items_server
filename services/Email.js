@@ -18,7 +18,7 @@ const sendEmail = async (options) => {
     from: "noreply@thetestingserver.com",
     to: options.email,
     subject: options.subject,
-    text: options.message|| null,
+    text: options.message || null,
     html: options?.html || null,
   };
   // console.log(mailOptions);
@@ -27,3 +27,18 @@ const sendEmail = async (options) => {
 };
 
 export default sendEmail;
+
+export const sendMultipleEmails = async (...args) => {
+  try {
+    const promises = [
+      args.forEach((arg, index) => {
+        return sendEmail({ ...arg });
+      }),
+    ];
+    console.log(promises, "promises");
+
+    await Promise.all(promises);
+  } catch (error) {
+    return error;
+  }
+};
