@@ -155,6 +155,7 @@ export const userLogin = CatchAsync(async (req, res, next) => {
       role: true,
       userType: true,
       active: true,
+      isSubscribed: true,
       ...checkAccountPermission,
     },
     where: {

@@ -13,8 +13,45 @@ const __dirname = path.resolve();
 
 export const addMembership = async (req, res, next) => {
   try {
-    const { plan, user } = req.body;
-    const token = req.cookie;
+    const { planId, amount } = req.body;
+    const { id } = req.user;
+    const membership = await prisma.memberships.findUnique({
+      where: { userId: id },
+    });
+
+    if (membership) {
+      return next(new AppError("You already have a membership", 400));
+    }
+    const newMembership = await prisma.memberships.create({
+      data: {
+        startDate: new Date(),
+        endDate: new Date().setDate(date.getDate() + 30),
+        userId: id,
+        subscriptionPlanId: planId,
+        status: "ACTIVE",
+      },
+    });
+    const payments = await prisma.payment.create({
+      data: {
+        amount: amount,
+        currency: "$",
+        paymentDate: new Date(),
+        stripePaymentId: "1213241",
+        subscriptionId: newMembership.id,
+      },
+    });
+    if (newMembership && payments) {
+      const user = await prisma.users.update({
+        where: { id: id },
+        data: {
+          isSubscribed: true,
+        },
+      });
+      return res.status(201).json({
+        message: "Congradulations, Your Basic Plan has been activated",
+        isSubscribed: true,
+      });
+    }
   } catch (error) {
     return next(
       new AppError("Something went wrong! Please try after sometime.")
@@ -64,7 +101,7 @@ export const postProduct = CatchAsync(async (req, res, next) => {
     req.body;
 
   console.log(category);
-  const slug = Date.now() + name.replaceAll(" ", "-");
+  const slug = Date.now() + name.replaceAll(" ", "-").replaceAll("/", "-");
   const product = await prisma.listedItem.create({
     data: {
       name,
@@ -106,8 +143,8 @@ export const updateProduct = CatchAsync(async (req, res, next) => {
   // try {
   const { name, description, category, images, _attachments, post_id } =
     req.body;
-
-  console.log(post_id, "post_id");
+  const slug = Date.now() + name.replaceAll(" ", "-").replaceAll("/", "-");
+  // console.log(post_id, "post_id");
   const existingProduct = await prisma.listedItem.findUnique({
     where: {
       post_id: post_id,
@@ -130,6 +167,7 @@ export const updateProduct = CatchAsync(async (req, res, next) => {
       categoryId: category.id,
       userId: req.user.id,
       updatedAt: new Date(),
+      slug,
     },
   });
 
@@ -382,7 +420,7 @@ export const getMyProducts = CatchAsync(async (req, res, next) => {
           image: true,
         },
       },
-      category: true
+      category: true,
     },
     orderBy: {
       createdAt: order,

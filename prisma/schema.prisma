@@ -36,6 +36,7 @@ model Users {
   buyer               Boolean?              @default(true)
   seller              Boolean?              @default(false)
   donor               Boolean?              @default(false)
+  isSubscribed        Boolean?              @default(false)
   membership          Memberships?
   listedItem          ListedItem[]
   donations           Donations[]

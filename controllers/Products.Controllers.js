@@ -227,7 +227,7 @@ export const getSingleProduct = CatchAsync(async (req, res) => {
     status: true,
     product: {
       ...product,
-      images: product.images.map((item) => ({ ...item, url: item.image })),
+      images: product.images?.map((item) => ({ ...item, url: item.image })),
     },
   });
 });
