@@ -25,7 +25,7 @@ export const addMembership = async (req, res, next) => {
     const newMembership = await prisma.memberships.create({
       data: {
         startDate: new Date(),
-        endDate: new Date().setDate(date.getDate() + 30),
+        endDate: new Date().setDate(new Date().getDate() + 30),
         userId: id,
         subscriptionPlanId: planId,
         status: "ACTIVE",
@@ -53,6 +53,7 @@ export const addMembership = async (req, res, next) => {
       });
     }
   } catch (error) {
+    console.log(error)
     return next(
       new AppError("Something went wrong! Please try after sometime.")
     );
