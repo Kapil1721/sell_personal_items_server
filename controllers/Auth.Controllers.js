@@ -99,7 +99,10 @@ export const userSignUp = CatchAsync(async (req, res, next) => {
 
     const __dirname = path.resolve();
 
-    let x = await fs.readFileSync(__dirname + "/templates/emailTemp.html", "utf8");
+    let x = await fs.readFileSync(
+      __dirname + "/templates/emailTemp.html",
+      "utf8"
+    );
 
     let y = x
       .replace("{{name}}", user.username)
@@ -209,7 +212,7 @@ export const authMiddleware = async (req, res, next) => {
   const token = req.cookies.token;
   // console.log(token);
   if (!token) {
-    return res.status(403).json({ status: "404" });
+    return res.status(403).json({ status: false, message: "Session Expired, Please login again" });
   }
 
   try {
