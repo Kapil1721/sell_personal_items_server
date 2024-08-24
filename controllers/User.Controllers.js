@@ -77,7 +77,7 @@ export const addMembership = async (req, res, next) => {
       where: { userId: id },
     });
 
-    if (!existingMembership) {
+    if (existingMembership) {
       return res.status(400).json({
         status: false,
         message: "User already has an active membership",
