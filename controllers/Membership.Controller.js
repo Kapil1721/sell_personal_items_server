@@ -27,6 +27,7 @@ export const getPlans = async (req, res, next) => {
     return next(error);
   }
 };
+
 export const getPlansById = async (req, res, next) => {
   try {
     const { id } = req.params;

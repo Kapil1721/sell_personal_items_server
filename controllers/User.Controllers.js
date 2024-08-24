@@ -5,58 +5,230 @@ import { PrismaClient } from "@prisma/client";
 import { CatchAsync } from "../utils/CatchAsync.js";
 import bcrypt from "bcryptjs";
 import { count, log } from "console";
+import { sendMultipleEmails } from "../services/Email.js";
 // import { broadcastService } from "../app.js";
 
 const prisma = new PrismaClient();
 
 const __dirname = path.resolve();
 
-export const addMembership = async (req, res, next) => {
+function addMonths(date, months) {
+  const newDate = new Date(date); // Copy the original date
+
+  // Set the month and handle cases where days might overflow
+  newDate.setMonth(newDate.getMonth() + months);
+
+  // Adjust day if it exceeds the number of days in the new month
+  if (newDate.getDate() < date.getDate()) {
+    newDate.setDate(0); // Go to the last day of the previous month
+  }
+
+  return newDate;
+}
+
+const processPayment = async (amount) => {
   try {
-    const { planId, amount } = req.body;
-    const { id } = req.user;
-    const membership = await prisma.memberships.findUnique({
+    // Integrate with actual payment gateway like Stripe
+    // Here, return a mock success response for illustration
+    if (!amount) {
+      throw new Error("Payment processing failed");
+    }
+    // const paymentIntent = await stripe.paymentIntents.create({
+    //   amount: Math.round(amount * 100), // amount in cents
+    //   currency: 'usd',
+    //   payment_method_types: ['card'],
+    // });
+
+    return {
+      success: true,
+      stripePaymentId: "paymentIntent.id",
+      currency: "paymentIntent.currency",
+    };
+  } catch (error) {
+    console.error("Payment processing failed", error);
+    return { success: false };
+  }
+};
+
+const processRefund = async (membershipId, amount) => {
+  try {
+    // Integrate with your payment gateway to issue a refund
+    // Assuming Stripe is used for payment processing
+    const refund = await stripe.refunds.create({
+      amount: Math.round(amount * 100), // amount in cents
+      reason: "requested_by_customer",
+      metadata: { membershipId },
+    });
+
+    return { success: true, refundId: refund.id };
+  } catch (error) {
+    console.error("Refund processing failed", error);
+    return { success: false };
+  }
+};
+
+export const addMembership = async (req, res, next) => {
+  const { planId, amount } = req.body;
+  const { id } = req.user;
+
+  try {
+    // Step 1: Check if the user already has an active membership
+    const existingMembership = await prisma.memberships.findFirst({
       where: { userId: id },
     });
 
-    if (membership) {
-      return next(new AppError("You already have a membership", 400));
+    if (existingMembership.userId === Number(id)) {
+      return res.status(400).json({
+        status: false,
+        message: "User already has an active membership",
+      });
     }
+
+    // Step 2: Validate the selected subscription plan
+    const plan = await prisma.subscriptionPlan.findUnique({
+      where: { id: planId },
+    });
+
+    if (!plan) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid subscription plan",
+      });
+    }
+
+    // Step 3: Process the payment
+    const paymentResult = await processPayment(amount);
+
+    if (!paymentResult.success) {
+      return res.status(400).json({
+        status: false,
+        message: "Payment processing failed",
+      });
+    }
+
+    // Step 4: Calculate start and end dates for the membership
+    const startDate = new Date();
+    const endDate = addMonths(startDate, plan.duration);
+
+    // Step 5: Create the membership record after successful payment
     const newMembership = await prisma.memberships.create({
       data: {
-        startDate: new Date(),
-        endDate: new Date().setDate(new Date().getDate() + 30),
+        startDate,
+        endDate,
         userId: id,
         subscriptionPlanId: planId,
         status: "ACTIVE",
       },
     });
-    const payments = await prisma.payment.create({
+
+    // Step 6: Record the payment in the database
+    await prisma.payment.create({
       data: {
-        amount: amount,
-        currency: "$",
+        amount,
+        currency: paymentResult.currency,
         paymentDate: new Date(),
-        stripePaymentId: "1213241",
-        subscriptionId: newMembership.id,
+        stripePaymentId: paymentResult.stripePaymentId,
+        // subscriptionId: newMembership.id,
       },
     });
-    if (newMembership && payments) {
-      const user = await prisma.users.update({
-        where: { id: id },
-        data: {
-          isSubscribed: true,
-        },
-      });
-      return res.status(201).json({
-        message: "Congradulations, Your Basic Plan has been activated",
+
+    // Step 7: Update user status to subscribed
+    await prisma.users.update({
+      where: { id },
+      data: {
         isSubscribed: true,
-      });
-    }
+      },
+    });
+
+    // Step 8: Send a confirmation email to the user
+    await sendMultipleEmails({
+      email: req.user.email,
+      subject: "Subscription Activated",
+      html: `<p>Your subscription plan has been successfully activated.</p>`,
+    });
+
+    // Step 9: Return a success response to the client
+    return res.status(201).json({
+      status: true,
+      message: "Congradulations, Your plan has been activated successfully.",
+      isSubscribed: true,
+    });
   } catch (error) {
-    console.log(error)
-    return next(
-      new AppError("Something went wrong! Please try after sometime.")
+    console.error("Error in addMembership:", error);
+    if (error instanceof AppError) {
+      return next(error);
+    }
+  } finally {
+    await prisma.$disconnect();
+  }
+};
+
+export const cancelPlan = async (req, res, next) => {
+  const { id } = req.user;
+  // const session = await prisma.$transaction();
+  try {
+    const membership = await prisma.memberships.findUnique({
+      where: { userId: id },
+      include: {
+        subscriptionPlan: true,
+      },
+    });
+
+    if (!membership || membership.status !== "ACTIVE") {
+      throw new AppError("No active membership found", 400);
+    }
+
+    const today = new Date();
+    const daysRemaining = differenceInDays(membership.endDate, today);
+
+    if (daysRemaining <= 0) {
+      throw new AppError("No days remaining for refund", 400);
+    }
+
+    // Calculate the refund amount based on remaining days
+    const totalDays = differenceInDays(
+      membership.endDate,
+      membership.startDate
     );
+    const dailyRate = membership.subscriptionPlan.price / totalDays;
+    const refundAmount = dailyRate * daysRemaining;
+
+    // Process refund
+    const refundResult = await processRefund(membership.id, refundAmount);
+
+    if (!refundResult.success) {
+      throw new AppError("Refund processing failed", 500);
+    }
+
+    // Update membership status
+    const updatedMembership = await prisma.memberships.update({
+      where: { id: membership.id },
+      data: {
+        status: "CANCELLED",
+      },
+    });
+
+    // Send confirmation emails
+    await sendMultipleEmails({
+      email: req.user.email,
+      subject: "Subscription Cancelled and Refunded",
+      html: `<p>Your subscription has been cancelled. A refund of $${refundAmount.toFixed(
+        2
+      )} has been processed for the remaining days.</p>`,
+    });
+
+    // await session.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "Subscription cancelled and refund processed successfully",
+    });
+  } catch (error) {
+    // await session.rollback();
+    console.error(error);
+    return next(new AppError("Something went wrong! Please try again later."));
+  } finally {
+    await prisma.$disconnect();
   }
 };
 

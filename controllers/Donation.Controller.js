@@ -28,10 +28,10 @@ export const createDonation = async (req, res, next) => {
         countryCode: countryCode ? countryCode : "+91",
         pickupAddress,
         pickupDate,
-        items
+        items,
       };
 
-      console.log(newDonation, "hjgdhsjfkhjkghd");
+    //   console.log(newDonation, "hjgdhsjfkhjkghd");
       const slug = Date.now() + name.replaceAll(" ", "-");
       donation = await prisma.donations.create({
         data: {
@@ -43,7 +43,7 @@ export const createDonation = async (req, res, next) => {
           usersId: newDonation.userId,
           items: {
             create: newDonation.items.map((item) => {
-              console.log(item.category);
+            //   console.log(item.category);
               return {
                 name: item.name,
                 userId: newDonation.userId,
@@ -344,6 +344,12 @@ export const createDonation = async (req, res, next) => {
         }
       );
     } else {
+      if (amount === "" || !amount) {
+        return res.status(400).json({
+          message: "Please select amount",
+          status: false,
+        });
+      }
       donation = await prisma.donations.create({
         data: {
           name: name,
@@ -538,6 +544,7 @@ export const createDonation = async (req, res, next) => {
     // console.log(donation.createdAt.getDate());
     return res.status(200).json({
       donation,
+      status: true,
       message: "Congratulation! Your donation has been done successfully.",
     });
   } catch (error) {
