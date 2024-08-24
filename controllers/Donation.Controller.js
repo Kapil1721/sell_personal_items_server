@@ -31,7 +31,7 @@ export const createDonation = async (req, res, next) => {
         items,
       };
 
-    //   console.log(newDonation, "hjgdhsjfkhjkghd");
+      //   console.log(newDonation, "hjgdhsjfkhjkghd");
       const slug = Date.now() + name.replaceAll(" ", "-");
       donation = await prisma.donations.create({
         data: {
@@ -43,7 +43,7 @@ export const createDonation = async (req, res, next) => {
           usersId: newDonation.userId,
           items: {
             create: newDonation.items.map((item) => {
-            //   console.log(item.category);
+              //   console.log(item.category);
               return {
                 name: item.name,
                 userId: newDonation.userId,
@@ -347,6 +347,24 @@ export const createDonation = async (req, res, next) => {
       if (amount === "" || !amount) {
         return res.status(400).json({
           message: "Please select amount",
+          status: false,
+        });
+      }
+      if (name === "" || !name) {
+        return res.status(400).json({
+          message: "Please enter name",
+          status: false,
+        });
+      }
+      if (email === "" || !email) {
+        return res.status(400).json({
+          message: "Please enter email",
+          status: false,
+        });
+      }
+      if (phone === "" || !phone) {
+        return res.status(400).json({
+          message: "Please enter phone",
           status: false,
         });
       }
