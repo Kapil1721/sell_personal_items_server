@@ -42,7 +42,7 @@ const processPayment = async (amount) => {
     return {
       success: true,
       stripePaymentId: "paymentIntent.id",
-      currency: "paymentIntent.currency",
+      currency: "$",
     };
   } catch (error) {
     console.error("Payment processing failed", error);
@@ -125,6 +125,7 @@ export const addMembership = CatchAsync(async (req, res, next) => {
       currency: paymentResult.currency,
       paymentDate: new Date(),
       stripePaymentId: paymentResult.stripePaymentId,
+      subscriptionId:newMembership.id,
       // subscriptionId: newMembership.id,
     },
   });
