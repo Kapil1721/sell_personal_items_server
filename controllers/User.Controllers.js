@@ -67,170 +67,149 @@ const processRefund = async (membershipId, amount) => {
   }
 };
 
-export const addMembership = async (req, res, next) => {
+export const addMembership = CatchAsync(async (req, res, next) => {
   const { planId, amount } = req.body;
   const { id } = req.user;
+  const existingMembership = await prisma.memberships.findFirst({
+    where: { userId: id },
+  });
 
-  try {
-    // Step 1: Check if the user already has an active membership
-    const existingMembership = await prisma.memberships.findFirst({
-      where: { userId: id },
+  if (existingMembership) {
+    return res.status(400).json({
+      status: false,
+      message: "User already has an active membership",
     });
-
-    if (existingMembership) {
-      return res.status(400).json({
-        status: false,
-        message: "User already has an active membership",
-      });
-    }
-
-    // Step 2: Validate the selected subscription plan
-    const plan = await prisma.subscriptionPlan.findUnique({
-      where: { id: planId },
-    });
-
-    if (!plan) {
-      return res.status(400).json({
-        status: false,
-        message: "Invalid subscription plan",
-      });
-    }
-
-    // Step 3: Process the payment
-    const paymentResult = await processPayment(amount);
-
-    if (!paymentResult.success) {
-      return res.status(400).json({
-        status: false,
-        message: "Payment processing failed",
-      });
-    }
-
-    // Step 4: Calculate start and end dates for the membership
-    const startDate = new Date();
-    const endDate = addMonths(startDate, plan.duration);
-
-    // Step 5: Create the membership record after successful payment
-    const newMembership = await prisma.memberships.create({
-      data: {
-        startDate,
-        endDate,
-        userId: id,
-        subscriptionPlanId: planId,
-        status: "ACTIVE",
-      },
-    });
-
-    // Step 6: Record the payment in the database
-    await prisma.payment.create({
-      data: {
-        amount,
-        currency: paymentResult.currency,
-        paymentDate: new Date(),
-        stripePaymentId: paymentResult.stripePaymentId,
-        // subscriptionId: newMembership.id,
-      },
-    });
-
-    // Step 7: Update user status to subscribed
-    await prisma.users.update({
-      where: { id },
-      data: {
-        isSubscribed: true,
-      },
-    });
-
-    // Step 8: Send a confirmation email to the user
-    await sendMultipleEmails({
-      email: req.user.email,
-      subject: "Subscription Activated",
-      html: `<p>Your subscription plan has been successfully activated.</p>`,
-    });
-
-    // Step 9: Return a success response to the client
-    return res.status(201).json({
-      status: true,
-      message: "Congradulations, Your plan has been activated successfully.",
-      isSubscribed: true,
-    });
-  } catch (error) {
-    console.error("Error in addMembership:", error);
-    if (error instanceof AppError) {
-      return next(error);
-    }
-  } finally {
-    await prisma.$disconnect();
   }
-};
 
-export const cancelPlan = async (req, res, next) => {
+  // Step 2: Validate the selected subscription plan
+  const plan = await prisma.subscriptionPlan.findUnique({
+    where: { id: planId },
+  });
+
+  if (!plan) {
+    return res.status(400).json({
+      status: false,
+      message: "Invalid subscription plan",
+    });
+  }
+
+  // Step 3: Process the payment
+  const paymentResult = await processPayment(amount);
+
+  if (!paymentResult.success) {
+    return res.status(400).json({
+      status: false,
+      message: "Payment processing failed",
+    });
+  }
+
+  // Step 4: Calculate start and end dates for the membership
+  const startDate = new Date();
+  const endDate = addMonths(startDate, plan.duration);
+
+  // Step 5: Create the membership record after successful payment
+  const newMembership = await prisma.memberships.create({
+    data: {
+      startDate,
+      endDate,
+      userId: id,
+      subscriptionPlanId: planId,
+      status: "ACTIVE",
+    },
+  });
+
+  // Step 6: Record the payment in the database
+  await prisma.payment.create({
+    data: {
+      amount,
+      currency: paymentResult.currency,
+      paymentDate: new Date(),
+      stripePaymentId: paymentResult.stripePaymentId,
+      // subscriptionId: newMembership.id,
+    },
+  });
+
+  // Step 7: Update user status to subscribed
+  await prisma.users.update({
+    where: { id },
+    data: {
+      isSubscribed: true,
+    },
+  });
+
+  // Step 8: Send a confirmation email to the user
+  await sendMultipleEmails({
+    email: req.user.email,
+    subject: "Subscription Activated",
+    html: `<p>Your subscription plan has been successfully activated.</p>`,
+  });
+
+  // Step 9: Return a success response to the client
+  return res.status(201).json({
+    status: true,
+    message: "Congradulations, Your plan has been activated successfully.",
+    isSubscribed: true,
+  });
+});
+
+export const cancelPlan = CatchAsync(async (req, res, next) => {
   const { id } = req.user;
   // const session = await prisma.$transaction();
-  try {
-    const membership = await prisma.memberships.findUnique({
-      where: { userId: id },
-      include: {
-        subscriptionPlan: true,
-      },
-    });
 
-    if (!membership || membership.status !== "ACTIVE") {
-      throw new AppError("No active membership found", 400);
-    }
+  const membership = await prisma.memberships.findUnique({
+    where: { userId: id },
+    include: {
+      subscriptionPlan: true,
+    },
+  });
 
-    const today = new Date();
-    const daysRemaining = differenceInDays(membership.endDate, today);
-
-    if (daysRemaining <= 0) {
-      throw new AppError("No days remaining for refund", 400);
-    }
-
-    // Calculate the refund amount based on remaining days
-    const totalDays = differenceInDays(
-      membership.endDate,
-      membership.startDate
-    );
-    const dailyRate = membership.subscriptionPlan.price / totalDays;
-    const refundAmount = dailyRate * daysRemaining;
-
-    // Process refund
-    const refundResult = await processRefund(membership.id, refundAmount);
-
-    if (!refundResult.success) {
-      throw new AppError("Refund processing failed", 500);
-    }
-
-    // Update membership status
-    const updatedMembership = await prisma.memberships.update({
-      where: { id: membership.id },
-      data: {
-        status: "CANCELLED",
-      },
-    });
-
-    // Send confirmation emails
-    await sendMultipleEmails({
-      email: req.user.email,
-      subject: "Subscription Cancelled and Refunded",
-      html: `<p>Your subscription has been cancelled. A refund of $${refundAmount.toFixed(
-        2
-      )} has been processed for the remaining days.</p>`,
-    });
-
-    // await session.commit();
-
-    return res.status(200).json({
-      status: true,
-      message: "Subscription cancelled and refund processed successfully",
-    });
-  } catch (error) {
-    // await session.rollback();
-    console.error(error);
-    return next(new AppError("Something went wrong! Please try again later."));
-  } finally {
-    await prisma.$disconnect();
+  if (!membership || membership.status !== "ACTIVE") {
+    throw new AppError("No active membership found", 400);
   }
-};
+
+  const today = new Date();
+  const daysRemaining = differenceInDays(membership.endDate, today);
+
+  if (daysRemaining <= 0) {
+    throw new AppError("No days remaining for refund", 400);
+  }
+
+  // Calculate the refund amount based on remaining days
+  const totalDays = differenceInDays(membership.endDate, membership.startDate);
+  const dailyRate = membership.subscriptionPlan.price / totalDays;
+  const refundAmount = dailyRate * daysRemaining;
+
+  // Process refund
+  const refundResult = await processRefund(membership.id, refundAmount);
+
+  if (!refundResult.success) {
+    throw new AppError("Refund processing failed", 500);
+  }
+
+  // Update membership status
+  const updatedMembership = await prisma.memberships.update({
+    where: { id: membership.id },
+    data: {
+      status: "CANCELLED",
+    },
+  });
+
+  // Send confirmation emails
+  await sendMultipleEmails({
+    email: req.user.email,
+    subject: "Subscription Cancelled and Refunded",
+    html: `<p>Your subscription has been cancelled. A refund of $${refundAmount.toFixed(
+      2
+    )} has been processed for the remaining days.</p>`,
+  });
+
+  // await session.commit();
+
+  return res.status(200).json({
+    status: true,
+    message: "Subscription cancelled and refund processed successfully",
+  });
+});
 
 export const uploads = async (req, res, next) => {
   try {
