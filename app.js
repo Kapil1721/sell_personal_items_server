@@ -47,6 +47,7 @@ app.use(helmet());
 app.use(
   cors({
     origin: [
+      "https://sellpersonalitems.com",
       "https://thepreview.pro",
       "https://sellpersonalitems.thepreview.pro",
       "https://sellpersonalitem.vercel.app",
