@@ -50,6 +50,7 @@ app.use(
       "https://sellpersonalitems.com",
       "https://thepreview.pro",
       "https://sellpersonalitems.thepreview.pro",
+      "https://www.sellpersonalitems.com",
       "https://sellpersonalitem.vercel.app",
       "http://localhost:5173",
     ],
